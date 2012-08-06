@@ -1,0 +1,3 @@
+[submodule "scripts/TinCanDriver"]
+	path = scripts/TinCanDriver
+	url = git@github.com:RusticiSoftware/TinCanDriver
