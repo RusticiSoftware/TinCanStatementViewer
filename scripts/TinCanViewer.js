@@ -21,9 +21,8 @@ var TINCAN = (TINCAN || {});
 TINCAN.Viewer = function(){ 
 	this.lastStoredDate = null;
 	this.moreStatementsUrl = null;
-	this.auth = null;
-	this.endpoint = null;
 	this.includeRawData = true;
+    this.tc_driver = null;
 };
 
 TINCAN.Viewer.prototype.getCallback = function(callback){
@@ -31,18 +30,13 @@ TINCAN.Viewer.prototype.getCallback = function(callback){
 	return function(){ callback.apply(self, arguments); };
 };
 
-TINCAN.Viewer.prototype.getAuth = function(){ 
-	if(this.auth == null){
-		this.auth = 'Basic ' + Base64.encode(Config.authUser + ':' + Config.authPassword);
-	}
-	return this.auth;
-};
-
-TINCAN.Viewer.prototype.getEndpoint = function(){
-	if(this.endpoint == null){
-		this.endpoint = Config.endpoint;
-	}
-	return this.endpoint;
+TINCAN.Viewer.prototype.getDriver = function(){
+    if(this.tc_driver == null){
+        this.tc_driver = {};
+        this.tc_driver.endpoint = Config.endpoint;
+        this.tc_driver.auth = 'Basic ' + Base64.encode(Config.authUser + ':' + Config.authPassword);
+    }
+    return this.tc_driver;
 };
 
 
@@ -245,7 +239,7 @@ TINCAN.Viewer.prototype.searchStatements = function(){
 	queryObj.instructor = helper.getInstructor();
 	queryObj.limit = 25;
 	
-	var url = this.getEndpoint() + "statements?" + queryObj.toString();
+	var url = this.getDriver().endpoint + "statements?" + queryObj.toString();
 	$("#TCAPIQueryText").text(url);
 
 	this.getStatements(queryObj, this.getCallback(this.renderStatementsHandler));
@@ -254,21 +248,14 @@ TINCAN.Viewer.prototype.searchStatements = function(){
 TINCAN.Viewer.prototype.getMoreStatements = function(){
 	if (this.moreStatementsUrl !== null){
 		$("#statementsLoading").show();
-		var url = this.getEndpoint() + this.moreStatementsUrl.substr(1);
-		XHR_request(tc_lrs, url, "GET", null, this.getAuth(), this.getCallback(this.renderStatementsHandler));
+		var url = this.moreStatementsUrl.substr(1);
+		_TCDriver_XHR_request(this.getDriver(), url, "GET", null, this.getCallback(this.renderStatementsHandler));
 	}
 };
 
 TINCAN.Viewer.prototype.getStatements = function(queryObj, callback){
-	var url = this.getEndpoint() + "statements?" + queryObj.toString();
-	XHR_request(tc_lrs, url, "GET", null, this.getAuth(), callback);
-};
-
-TINCAN.Viewer.prototype.getActivityProfile = function(activityId, profileKey, callbackFunction) {
-		var url = this.getEndpoint() + "activities/profile?activityId=<activity ID>&profileId=<profilekey>";
-		url = url.replace('<activity ID>',encodeURIComponent(activityId));
-		url = url.replace('<profilekey>',encodeURIComponent(profileKey));
-		XHR_request(tc_lrs, url, "GET", null, this.getAuth(), callbackFunction, true);
+	var url = "statements?" + queryObj.toString();
+	_TCDriver_XHR_request(this.getDriver(), url, "GET", null, callback);
 };
 
 TINCAN.Viewer.prototype.renderStatementsHandler = function(xhr){
