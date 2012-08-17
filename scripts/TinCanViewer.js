@@ -25,16 +25,30 @@ TINCAN.Viewer = function(){
     this.tc_driver = null;
 };
 
+if (typeof console !== "undefined") {
+    TINCAN.Viewer.prototype.log = function (str) {
+        console.log(str);
+    };
+}
+else {
+    TINCAN.Viewer.prototype.log = function (str) {};
+}
+
 TINCAN.Viewer.prototype.getCallback = function(callback){
 	var self = this;
 	return function(){ callback.apply(self, arguments); };
 };
 
 TINCAN.Viewer.prototype.getDriver = function(){
-    if(this.tc_driver == null){
-        this.tc_driver = {};
-        this.tc_driver.endpoint = Config.endpoint;
-        this.tc_driver.auth = 'Basic ' + Base64.encode(Config.authUser + ':' + Config.authPassword);
+    if (this.tc_driver === null) {
+        this.tc_driver = TCDriver_ConfigObject();
+        TCDriver_AddRecordStore(
+            this.tc_driver,
+            {
+                endpoint: Config.endpoint,
+                auth: 'Basic ' + Base64.encode(Config.authUser + ':' + Config.authPassword)
+            }
+        );
     }
     return this.tc_driver;
 };
@@ -239,7 +253,7 @@ TINCAN.Viewer.prototype.searchStatements = function(){
 	queryObj.instructor = helper.getInstructor();
 	queryObj.limit = 25;
 	
-	var url = this.getDriver().endpoint + "statements?" + queryObj.toString();
+	var url = this.getDriver().recordStores[0].endpoint + "statements?" + queryObj.toString();
 	$("#TCAPIQueryText").text(url);
 
 	this.getStatements(queryObj, this.getCallback(this.renderStatementsHandler));
@@ -249,13 +263,13 @@ TINCAN.Viewer.prototype.getMoreStatements = function(){
 	if (this.moreStatementsUrl !== null){
 		$("#statementsLoading").show();
 		var url = this.moreStatementsUrl.substr(1);
-		_TCDriver_XHR_request(this.getDriver(), url, "GET", null, this.getCallback(this.renderStatementsHandler));
+		_TCDriver_XHR_request(this.getDriver().recordStores[0], url, "GET", null, this.getCallback(this.renderStatementsHandler));
 	}
 };
 
 TINCAN.Viewer.prototype.getStatements = function(queryObj, callback){
 	var url = "statements?" + queryObj.toString();
-	_TCDriver_XHR_request(this.getDriver(), url, "GET", null, callback);
+	_TCDriver_XHR_request(this.getDriver().recordStores[0], url, "GET", null, callback);
 };
 
 TINCAN.Viewer.prototype.renderStatementsHandler = function(xhr){
@@ -518,8 +532,6 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 		try {
             var stmtStr = [];
 			stmtStr.push("<tr class='statementRow'>");  
-			//dt = TCDriver_DateFromISOString(statements[i].stored);
-			//stmtStr.push("<td class='date'>"+ dt.toLocaleDateString() + " " + dt.toLocaleTimeString()  +"</td>");
 			stmtStr.push("<td class='date'><div class='statementDate'>"+ stmt.stored.replace('Z','')  +"</div></td>");
 
 			stmtStr.push("<td >");
@@ -571,7 +583,7 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
             allStmtStr.push(stmtStr.join(''));
 		}
 		catch (error){
-			TCDriver_Log("Error occurred while trying to display statement with id " + stmt.id + ": " + error.message);
+			this.log("Error occurred while trying to display statement with id " + stmt.id + ": " + error.message);
 		}
 	}
 	stmtStr.push("</table>");
