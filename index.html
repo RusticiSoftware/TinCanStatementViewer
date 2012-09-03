@@ -3,13 +3,13 @@
     <head>
         <meta charset="utf-8">
         <title>Tin Can Viewer</title>
-        
+
         <link rel="stylesheet" href="css/base.css">
 		<link rel="stylesheet" href="css/skeleton.css">
 		<link rel="stylesheet" href="css/layout.css">
 		<link rel="stylesheet" href="css/TinCanViewer.css">
 		<link rel="stylesheet" href="css/smoothness/jquery-ui-1.8.17.custom.css">
-		
+
         <script type="text/javascript" src="scripts/jquery-1.6.3.min.js"></script>
         <script type="text/javascript" src="scripts/jquery-ui-1.8.17.custom.min.js"></script>
 		<script type="text/javascript" src="config.js"></script>
@@ -25,16 +25,12 @@
                 TC_VIEWER.searchStatements();
             });
         </script>
-        
     </head>
-    
-    
+
     <body>
-		
-       
 		<div class="container">
 			<h1>Tin Can Statement Viewer</h1>
-			
+
 			<!-- <ul class="tabs"> -->
 			  <!-- Give href an ID value of corresponding "tabs-content" <li>'s -->
 			  <!-- <li><a class="active" href="#statements">Statements</a></li>
@@ -55,7 +51,6 @@
 								<td><label>Verb</label><input id="verb" type="text" placeholder="Verb"></input></td>
 								<td><label>Activity ID</label><input id="activityId" type="text" placeholder="Activity ID"></input></td>
 								<td><label>Use Context Activities</label><input id="context" type="checkbox"></input></td>
-								
 							</tr>
 						</table>
 						<table id="advancedSearchTable" class="searchBoxTable" style="display:none">
@@ -72,48 +67,42 @@
 								<td><label>Sparse</label><input id="sparse" type="checkbox"></input></td>
 							</tr>
 						</table>
-						
+
 						<div id="TCAPIQuery" style="display:none"><label>TCAPI Query</label><textarea readonly="true" id="TCAPIQueryText"></textarea></div>
-						
+
 						<button id='refreshStatements'>Refresh</button>
 						<button id="showAdvancedOptions">Show Advanced Options</button>
 						<button id="showQuery">Show TCAPI Query</button>
 					</div>
-					
-					
-
 					<div id='theStatements'></div>
                     <div id='statementsLoading'>
                         <img src="img/loading.gif"></img>
                     </div>
 					<button id='showAllStatements'>More...</button>
-					
-					
 				<!-- </li>
-			  
+
 				<li id="activities">
 					<div class="heading">Activities</div>
 					<div id='activityData' ></div>
 					<button id='refreshActivityData'>Refresh</button>
 				</li>
-			  	
+
 				<li id="actors">
 					<div class="heading">Actors</div>
 					<div id='actorData' ></div>
 					<button id='refreshHighScores'>Refresh</button>
 			  	</li>
-			
+
 			  	<li id='lrsUtils'>
 					Here you have the ability to clear out your Learning Record Store.  Please do so with caution.  
 					This will clear all of your stored LRS data.
-					
+
 					<br/><br/>
 					<button id='deleteAllData'>Delete LRS Data</button>
 				</li>
-			
-			</ul> -->
-			
-		</div>
 
+			</ul> -->
+
+		</div>
     </body>
 </html>
