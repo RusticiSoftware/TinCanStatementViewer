@@ -5,38 +5,38 @@
         <title>Tin Can Viewer</title>
 
         <link rel="stylesheet" href="css/base.css">
-		<link rel="stylesheet" href="css/skeleton.css">
-		<link rel="stylesheet" href="css/layout.css">
-		<link rel="stylesheet" href="css/TinCanViewer.css">
-		<link rel="stylesheet" href="css/smoothness/jquery-ui-1.8.17.custom.css">
+        <link rel="stylesheet" href="css/skeleton.css">
+        <link rel="stylesheet" href="css/layout.css">
+        <link rel="stylesheet" href="css/TinCanViewer.css">
+        <link rel="stylesheet" href="css/smoothness/jquery-ui-1.8.17.custom.css">
     </head>
 
     <body>
-		<div class="container">
-			<h1>Tin Can Statement Viewer</h1>
+        <div class="container">
+            <h1>Tin Can Statement Viewer</h1>
             Click on a statement to see the raw statement data.
             <br/><br/>
             <div id="searchBox">
                 <table id="searchBoxTable" class="searchBoxTable">
                     <tr>
-                        <td><label>Actor Email</label><input id="actorEmail" type="text" placeholder="Email Address"></input></td>
-                        <td><label>Verb</label><input id="verb" type="text" placeholder="Verb"></input></td>
-                        <td><label>Activity ID</label><input id="activityId" type="text" placeholder="Activity ID"></input></td>
-                        <td><label>Use Context Activities</label><input id="context" type="checkbox"></input></td>
+                        <td><label>Actor Email</label><input id="actorEmail" type="text" placeholder="Email Address"></td>
+                        <td><label>Verb</label><input id="verb" type="text" placeholder="Verb"></td>
+                        <td><label>Activity ID</label><input id="activityId" type="text" placeholder="Activity ID"></td>
+                        <td><label>Use Context Activities</label><input id="context" type="checkbox"></td>
                     </tr>
                 </table>
                 <table id="advancedSearchTable" class="searchBoxTable" style="display:none">
                     <tr>
-                        <td><label>Since</label><input id="since" type="text" placeholder="YYYY-MM-ddTHH:mm:ss.SSSZ"></input></td>
-                        <td><label>Until</label><input id="until" type="text" placeholder="YYYY-MM-ddTHH:mm:ss.SSSZ"></input></td>
-                        <td><label>Registration</label><input id="registration" type="text" placeholder="TinCan Registration ID"></input></td>
-                        <td><label>Authoritative Only</label><input id="authoritative" type="checkbox"></input></td>
+                        <td><label>Since</label><input id="since" type="text" placeholder="YYYY-MM-ddTHH:mm:ss.SSSZ"></td>
+                        <td><label>Until</label><input id="until" type="text" placeholder="YYYY-MM-ddTHH:mm:ss.SSSZ"></td>
+                        <td><label>Registration</label><input id="registration" type="text" placeholder="TinCan Registration ID"></td>
+                        <td><label>Authoritative Only</label><input id="authoritative" type="checkbox"></td>
                     </tr>
                     <tr>
-                        <td><label>Actor JSON</label><input id="actorJson" type="text" placeholder="Actor JSON"></input></td>
-                        <td><label>Object JSON</label><input id="objectJson" type="text" placeholder="Object JSON"></input></td>
-                        <td><label>Instructor JSON</label><input id="instructorJson" type="text" placeholder="Instructor JSON"></input></td>
-                        <td><label>Sparse</label><input id="sparse" type="checkbox"></input></td>
+                        <td><label>Actor JSON</label><input id="actorJson" type="text" placeholder="Actor JSON"></td>
+                        <td><label>Object JSON</label><input id="objectJson" type="text" placeholder="Object JSON"></td>
+                        <td><label>Instructor JSON</label><input id="instructorJson" type="text" placeholder="Instructor JSON"></td>
+                        <td><label>Sparse</label><input id="sparse" type="checkbox"></td>
                     </tr>
                 </table>
 
@@ -48,10 +48,10 @@
             </div>
             <div id='theStatements'></div>
             <div id='statementsLoading'>
-                <img src="img/loading.gif"></img>
+                <img src="img/loading.gif" alt="Loading">
             </div>
             <button id='showAllStatements'>More...</button>
-		</div>
+        </div>
 
         <script type="text/javascript" src="scripts/jquery-1.6.3.min.js"></script>
         <script type="text/javascript" src="scripts/jquery-ui-1.8.17.custom.min.js"></script>
