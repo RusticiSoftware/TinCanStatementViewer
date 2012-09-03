@@ -9,22 +9,6 @@
 		<link rel="stylesheet" href="css/layout.css">
 		<link rel="stylesheet" href="css/TinCanViewer.css">
 		<link rel="stylesheet" href="css/smoothness/jquery-ui-1.8.17.custom.css">
-
-        <script type="text/javascript" src="scripts/jquery-1.6.3.min.js"></script>
-        <script type="text/javascript" src="scripts/jquery-ui-1.8.17.custom.min.js"></script>
-		<script type="text/javascript" src="config.js"></script>
-		<script type="text/javascript" src="scripts/tabs.js"></script>
-		<script type="text/javascript" src="scripts/base64.js"></script>
-		<script type="text/javascript" src="scripts/TinCanJS/src/tincan.js"></script>
-		<script type="text/javascript" src="scripts/TinCanViewer.js"></script>
-
-        <script type="text/javascript">
-            $(document).ready(function(){
-                TC_VIEWER = new TINCAN.Viewer();
-                TC_VIEWER.pageInitialize();
-                TC_VIEWER.searchStatements();
-            });
-        </script>
     </head>
 
     <body>
@@ -68,5 +52,21 @@
             </div>
             <button id='showAllStatements'>More...</button>
 		</div>
+
+        <script type="text/javascript" src="scripts/jquery-1.6.3.min.js"></script>
+        <script type="text/javascript" src="scripts/jquery-ui-1.8.17.custom.min.js"></script>
+        <script type="text/javascript" src="config.js"></script>
+        <script type="text/javascript" src="scripts/tabs.js"></script>
+        <script type="text/javascript" src="scripts/base64.js"></script>
+        <script type="text/javascript" src="scripts/TinCanJS/src/tincan.js"></script>
+        <script type="text/javascript" src="scripts/TinCanViewer.js"></script>
+
+        <script type="text/javascript">
+            $(document).ready(function(){
+                TC_VIEWER = new TINCAN.Viewer();
+                TC_VIEWER.pageInitialize();
+                TC_VIEWER.searchStatements();
+            });
+        </script>
     </body>
 </html>
