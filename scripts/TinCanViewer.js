@@ -527,10 +527,10 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 
 
 
+        var stmtStr = [];
 	for (i = 0; i < statements.length ; i++){
 		var stmt = statements[i];
 		try {
-            var stmtStr = [];
 			stmtStr.push("<tr class='statementRow'>");  
 			stmtStr.push("<td class='date'><div class='statementDate'>"+ stmt.stored.replace('Z','')  +"</div></td>");
 
