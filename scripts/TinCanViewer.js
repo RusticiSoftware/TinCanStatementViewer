@@ -277,6 +277,20 @@ TINCAN.Viewer.prototype.renderStatementsHandler = function(xhr){
 };
 
 TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
+    var statements,
+        allStmtStr,
+        i,
+        dt,
+        aDate,
+        stmtStr,
+        stmt,
+        verb,
+        objDesc,
+        answer,
+        activityType,
+        unwiredDivs
+    ;
+
 	function getDateString(dt){
 		var now = new Date();
 		var usemonths = false;
@@ -498,7 +512,7 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
     };
 	
 	
-    var statements = statementsResult.statements;
+    statements = statementsResult.statements;
     
     this.moreStatementsUrl = statementsResult.more;
     if(this.moreStatementsUrl === undefined || this.moreStatementsUrl === null){
@@ -507,13 +521,9 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
     	$("#showAllStatements").show();
     }
 	
-    var allStmtStr = new Array();
+    allStmtStr = new Array();
 	allStmtStr.push("<table>");
 	
-	var i;
-	var dt;
-	var aDate;
-
 	if (statements.length > 0) {
 		if (!this.lastStoredDate) {
 			this.lastStoredDate = statements[0].stored;
@@ -527,9 +537,9 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 
 
 
-        var stmtStr = [];
+    stmtStr = [];
 	for (i = 0; i < statements.length ; i++){
-		var stmt = statements[i];
+		stmt = statements[i];
 		try {
 			stmtStr.push("<tr class='statementRow'>");  
 			stmtStr.push("<td class='date'><div class='statementDate'>"+ stmt.stored.replace('Z','')  +"</div></td>");
@@ -538,12 +548,12 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 				stmtStr.push("<div class=\"statement unwired\" tcid='" + stmt.id + "'>")
 					stmtStr.push("<span class='actor'>"+ getActorName(stmt.actor) +"</span>");
 			
-					var verb = getVerbText(stmt);
-					var objDesc = getTargetDesc(stmt);
-					var answer = null;
+					verb = getVerbText(stmt);
+					objDesc = getTargetDesc(stmt);
+					answer = null;
 					
 					if (stmt.object.definition !== undefined){
-			            var activityType = stmt.object.definition.type;
+			            activityType = stmt.object.definition.type;
 						if (activityType != undefined && (activityType == "question" || activityType.indexOf("interaction") >= 0)){
 							if (stmt.result != undefined){
 								if (stmt.result.success != undefined){
@@ -591,7 +601,7 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 	$("#statementsLoading").hide();
 	
 	$("#theStatements").append(allStmtStr.join(''));
-	var unwiredDivs = $('div[tcid].unwired');
+	unwiredDivs = $('div[tcid].unwired');
 	unwiredDivs.click(function(){
 		$('[tcid_data="' + $(this).attr('tcid') + '"]').toggle();
 	});
