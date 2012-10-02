@@ -319,6 +319,10 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
         }
     }
 
+    function escapeHTML(text) {
+        return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
 	function getDateString(dt){
 		var now = new Date();
 		var usemonths = false;
@@ -615,7 +619,7 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 
 			stmtStr.push("<td >");
 				stmtStr.push("<div class=\"statement unwired\" tcid='" + stmt.id + "'>")
-					stmtStr.push("<span class='actor'>"+ getActorName(stmt.actor) +"</span>");
+					stmtStr.push("<span class='actor'>"+ escapeHTML(getActorName(stmt.actor)) +"</span>");
 			
 					verb = getVerbText(stmt);
 					objDesc = getTargetDesc(stmt);
@@ -629,14 +633,14 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 									verb = ((stmt.result.success)?"correctly ":"incorrectly ") + verb;
 								}
 								if (stmt.result.response != undefined){
-									answer = " with response '" + truncateString(getResponseText(stmt), 30) + "' ";
+									answer = " with response '" + escapeHTML(truncateString(getResponseText(stmt), 30)) + "' ";
 								}
 							}
 						}
 					}		
 					
-					stmtStr.push(" <span class='verb'>"+ verb +"</span>");
-					stmtStr.push(" <span class='object'>'"+ objDesc +"'</span>");
+					stmtStr.push(" <span class='verb'>"+ escapeHTML(verb) +"</span>");
+					stmtStr.push(" <span class='object'>'"+ escapeHTML(objDesc) +"'</span>");
 					stmtStr.push((answer != "")? answer : ".");
 					
 					if (stmt.result != undefined){
