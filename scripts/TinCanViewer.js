@@ -23,6 +23,8 @@ TINCAN.Viewer = function(){
 	this.moreStatementsUrl = null;
 	this.includeRawData = true;
     this.tc_driver = null;
+    this.tcapi_version = "0.95";
+    this.first_search = true;
 };
 
 if (typeof console !== "undefined") {
@@ -52,6 +54,10 @@ TINCAN.Viewer.prototype.getDriver = function(){
     }
     return this.tc_driver;
 };
+
+TINCAN.Viewer.prototype.getExtraHeaders = function(){
+    return {"X-Experience-API-Version":this.tcapi_version};
+}
 
 
 TINCAN.Viewer.prototype.TinCanStatementQueryObject = function(){
@@ -252,6 +258,8 @@ TINCAN.Viewer.prototype.searchStatements = function(){
 	queryObj.sparse = helper.getSparse();
 	queryObj.instructor = helper.getInstructor();
 	queryObj.limit = 25;
+
+    this.tcapi_version = $("#versionSelect").children(":selected").text();
 	
 	var url = this.getDriver().recordStores[0].endpoint + "statements?" + queryObj.toString();
 	$("#TCAPIQueryText").text(url);
@@ -263,13 +271,18 @@ TINCAN.Viewer.prototype.getMoreStatements = function(){
 	if (this.moreStatementsUrl !== null){
 		$("#statementsLoading").show();
 		var url = this.moreStatementsUrl.substr(1);
-		_TCDriver_XHR_request(this.getDriver().recordStores[0], url, "GET", null, this.getCallback(this.renderStatementsHandler));
+		_TCDriver_XHR_request(
+            this.getDriver().recordStores[0], url, "GET", null, 
+            this.getCallback(this.renderStatementsHandler), false, 
+            this.getExtraHeaders());
 	}
 };
 
 TINCAN.Viewer.prototype.getStatements = function(queryObj, callback){
 	var url = "statements?" + queryObj.toString();
-	_TCDriver_XHR_request(this.getDriver().recordStores[0], url, "GET", null, callback);
+	_TCDriver_XHR_request(
+        this.getDriver().recordStores[0], url, "GET", null, 
+        callback, false, this.getExtraHeaders());
 };
 
 TINCAN.Viewer.prototype.renderStatementsHandler = function(xhr){
@@ -288,8 +301,22 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
         objDesc,
         answer,
         activityType,
-        unwiredDivs
+        unwiredDivs,
+        tcViewer
     ;
+
+
+    //Capture reference to tcViewer object
+    tcViewer = this;
+
+    //If this is the first search, and no results were found, fallback to 0.9
+    if(tcViewer.first_search == true){
+        tcViewer.first_search = false;
+        if(statementsResult == null || statementsResult.statements.length == 0){
+            $("#versionSelect").val("0.9");
+            tcViewer.searchStatements();
+        }
+    }
 
 	function getDateString(dt){
 		var now = new Date();
@@ -339,7 +366,16 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 		}
 	}
 
-	function getActorName(actor){
+    function getActorName(actor){
+        if(tcViewer.tcapi_version == "0.9"){
+            return getActorName_v09(actor);
+        }
+        else {
+            return getActorName_v095(actor);
+        }
+    }
+
+	function getActorName_v09(actor){
 		if(actor === undefined){
 			return "";
 		}
@@ -360,6 +396,23 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 		}
 		return truncateString(JSON.stringify(actor), 20);
 	}
+
+	function getActorName_v095(actor){
+		if(actor === undefined){
+			return "";
+		}
+		if(actor.name !== undefined){
+			return actor.name;
+		}
+		if(actor.mbox !== undefined){
+			return actor.mbox.replace('mailto:','');
+		}
+		if(actor.account !== undefined){
+			return actor.account.accountName;
+		}
+		return truncateString(JSON.stringify(actor), 20);
+    }
+
 
     function getLangDictionaryValue(langDict){
         if(langDict["und"] != undefined){
@@ -496,6 +549,15 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 	};
 
     function getVerbText(stmt){
+        if(tcViewer.tcapi_version == "0.9"){
+            return getVerbText_v09(stmt);
+        }
+        else {
+            return getVerbText_v095(stmt);
+        }
+    }
+
+    function getVerbText_v09(stmt){
         var verb = stmt.verb;
         if(verb == 'interacted'){
             verb = 'interacted with';
@@ -510,7 +572,14 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
         }
         return verb;
     };
-	
+
+    function getVerbText_v095(stmt){
+        var verb = stmt.verb;
+        if(verb.display != null){
+            return getLangDictionaryValue(verb.display);
+        }
+        return truncateString(verb.uri, 20);
+	};
 	
     statements = statementsResult.statements;
     
@@ -614,7 +683,7 @@ TINCAN.Viewer.prototype.pageInitialize = function(){
 	
 	$.datepicker.setDefaults( {dateFormat: "yy-mm-dd", constrainInput: false} );
 	$( "#since" ).datepicker();
-	$( "#until" ).datepicker()
+	$( "#until" ).datepicker();
 	
 	$("#statementsLoading").show();
 	$("#showAllStatements").hide();
@@ -627,6 +696,7 @@ TINCAN.Viewer.prototype.pageInitialize = function(){
 		$("#theStatements").empty();
 		tcViewer.searchStatements();
 	});
+
 	$('#showAllStatements').click(function(){
 		$("#statementsLoading").show();
 		tcViewer.getMoreStatements();
@@ -647,7 +717,7 @@ TINCAN.Viewer.prototype.pageInitialize = function(){
 			$("#showQuery").html(text);
 		});
 	});
-	
+
 	(new this.TinCanFormHelper()).copyQueryStringToForm();
 };
 
