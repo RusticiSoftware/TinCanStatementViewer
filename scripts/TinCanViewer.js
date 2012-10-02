@@ -257,7 +257,7 @@ TINCAN.Viewer.prototype.searchStatements = function(){
 	queryObj.authoritative = helper.getAuthoritative();
 	queryObj.sparse = helper.getSparse();
 	queryObj.instructor = helper.getInstructor();
-	queryObj.limit = 25;
+	queryObj.limit = 5;
 
     this.tcapi_version = $("#versionSelect").children(":selected").text();
 	
@@ -606,9 +606,8 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 	}
 
 
-
-    stmtStr = [];
 	for (i = 0; i < statements.length ; i++){
+        stmtStr = [];
 		stmt = statements[i];
 		try {
 			stmtStr.push("<tr class='statementRow'>");  
@@ -666,7 +665,7 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
 			this.log("Error occurred while trying to display statement with id " + stmt.id + ": " + error.message);
 		}
 	}
-	stmtStr.push("</table>");
+	allStmtStr.push("</table>");
 	
 	$("#statementsLoading").hide();
 	
