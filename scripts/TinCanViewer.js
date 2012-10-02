@@ -257,7 +257,7 @@ TINCAN.Viewer.prototype.searchStatements = function(){
 	queryObj.authoritative = helper.getAuthoritative();
 	queryObj.sparse = helper.getSparse();
 	queryObj.instructor = helper.getInstructor();
-	queryObj.limit = 5;
+	queryObj.limit = 25;
 
     this.tcapi_version = $("#versionSelect").children(":selected").text();
 	
