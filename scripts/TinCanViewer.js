@@ -315,6 +315,7 @@ TINCAN.Viewer.prototype.renderStatements = function(statementsResult){
         if(statementsResult == null || statementsResult.statements.length == 0){
             $("#versionSelect").val("0.9");
             tcViewer.searchStatements();
+            return;
         }
     }
 
