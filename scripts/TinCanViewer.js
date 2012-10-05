@@ -71,10 +71,10 @@ TINCAN.Viewer.prototype.TinCanStatementQueryObject = function(){
 	this.toString = function(){
 		var qs = new Array();
 		for(var key in this){
-			if(key == "toString" || this[key] == null){
-				continue;
-			}
 			var val = this[key];
+            if(val == null || typeof val == "function"){
+                continue;
+            }
 			if(typeof val == "object"){
 				val = JSON.stringify(val);
 			}
@@ -82,6 +82,38 @@ TINCAN.Viewer.prototype.TinCanStatementQueryObject = function(){
 		}
 		return qs.join("&");
 	};
+
+    this.upConvertActor = function(actor){
+        var converted = null;
+        if(actor != null){
+            converted = {};
+            if(actor.mbox != null && typeof actor.mbox != "string"){
+                converted.mbox = actor.mbox[0];
+            }
+            if(actor.account != null && typeof actor.account[0] != "undefined"){
+                converted.account = {
+                    homePage: actor.account[0].accountServiceHomePage,
+                    name: actor.account[0].accountName
+                };
+            }
+        }
+        return converted;
+    };
+
+    this.converted = function(version){
+        var obj = this;
+        if(version != "0.9"){
+            obj = {};
+            for(var k in this){
+                if(this.hasOwnProperty(k)){
+                    obj[k] = this[k];
+                }
+            }
+            obj.actor = this.upConvertActor(obj.actor);
+            obj.instructor = this.upConvertActor(obj.instructor);
+        }
+        return obj;
+    };
 };
 
 TINCAN.Viewer.prototype.TinCanSearchHelper = function(){
@@ -275,7 +307,9 @@ TINCAN.Viewer.prototype.getStatements = function(queryObj, callback){
         queue = [],
         versionHeader,
         callbackCount,
-        createCallback;
+        createCallback,
+        version,
+        url;
 
     //Determine versions to use
     if(this.tcapiVersion != "all"){
@@ -303,6 +337,7 @@ TINCAN.Viewer.prototype.getStatements = function(queryObj, callback){
 
     //Loop through the versions, setting up callbacks and fetching statements
     for(i = 0; i < versionsToUse.length; i++){
+        version = versionsToUse[i];
 
         //Setup a function which will create a callback for this version
         createCallback = function(version){
@@ -325,16 +360,16 @@ TINCAN.Viewer.prototype.getStatements = function(queryObj, callback){
         };
 
         //Determine url, whether initial query or continuation query
-        var url = "statements?" + queryObj.toString();
+        url = "statements?" + queryObj.converted(version).toString();
         if(isMoreQuery){
-            url = this.moreUrls[versionsToUse[i]].substr(1);
+            url = this.moreUrls[version].substr(1);
         }
 
         //Fetch statements for this version
-        versionHeader = {"X-Experience-API-Version":versionsToUse[i]};
+        versionHeader = {"X-Experience-API-Version":version};
         _TCDriver_XHR_request(
             tcViewer.getDriver().recordStores[0], url, "GET", null, 
-            createCallback(versionsToUse[i]), false, versionHeader);
+            createCallback(version), false, versionHeader);
     }
 };
 
