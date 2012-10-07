@@ -23,7 +23,7 @@ TINCAN.Viewer = function(){
     this.tcDriver = null;
     this.tcapiVersion = "all";
     this.allVersions = ["0.9", "0.95"];
-    this.moreUrls = {};
+    this.multiVersionStream = null;
 };
 
 
@@ -37,9 +37,23 @@ else {
 }
 
 TINCAN.Viewer.prototype.getCallback = function(callback){
-	var self = this;
-	return function(){ callback.apply(self, arguments); };
+	var tcViewer = this;
+	return function(){ callback.apply(tcViewer, arguments); };
 };
+
+TINCAN.Viewer.prototype.copyObject = function(obj){
+    if(obj == null){
+        return null;
+    }
+    var newObj = {}, key;
+    for(key in obj){
+        if(obj.hasOwnProperty(key)){
+            newObj[key] = obj[key];
+        }
+    }
+    return newObj;
+};
+
 
 TINCAN.Viewer.prototype.getDriver = function(){
     if (this.tcDriver === null) {
@@ -55,66 +69,20 @@ TINCAN.Viewer.prototype.getDriver = function(){
     return this.tcDriver;
 };
 
-TINCAN.Viewer.prototype.TinCanStatementQueryObject = function(){
-	this.verb = null;
-	this.object = null;
-	this.registration = null;
-	this.context = false;
-	this.actor = null;
-	this.since = null;
-	this.until = null;
-	this.limit = 0;
-	this.authoritative = true;
-	this.sparse = false;
-	this.instructor = null;
-	
-	this.toString = function(){
-		var qs = new Array();
-		for(var key in this){
-			var val = this[key];
-            if(val == null || typeof val == "function"){
-                continue;
-            }
-			if(typeof val == "object"){
-				val = JSON.stringify(val);
-			}
-			qs.push(key + "=" + encodeURIComponent(val));
-		}
-		return qs.join("&");
-	};
+TINCAN.Viewer.prototype.getMultiVersionStream = function(versionList){
+    var lrs = this.getDriver().recordStores[0], 
+        lrsList = [], 
+        i, 
+        lrsCopy;
 
-    this.upConvertActor = function(actor){
-        var converted = null;
-        if(actor != null){
-            converted = {};
-            if(actor.mbox != null && typeof actor.mbox != "string"){
-                converted.mbox = actor.mbox[0];
-            }
-            if(actor.account != null && typeof actor.account[0] != "undefined"){
-                converted.account = {
-                    homePage: actor.account[0].accountServiceHomePage,
-                    name: actor.account[0].accountName
-                };
-            }
-        }
-        return converted;
-    };
-
-    this.converted = function(version){
-        var obj = this;
-        if(version != "0.9"){
-            obj = {};
-            for(var k in this){
-                if(this.hasOwnProperty(k)){
-                    obj[k] = this[k];
-                }
-            }
-            obj.actor = this.upConvertActor(obj.actor);
-            obj.instructor = this.upConvertActor(obj.instructor);
-        }
-        return obj;
-    };
+    for(i = 0; i < versionList.length; i++){
+        lrsCopy = this.copyObject(lrs);
+        lrsCopy.version = versionList[i];
+        lrsList.push(lrsCopy);
+    }
+    return new TINCAN.MultiLrsStatementStream(lrsList);
 };
+
 
 TINCAN.Viewer.prototype.TinCanSearchHelper = function(){
 	this.getActor = function(){
@@ -227,6 +195,7 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function(){
 	};
 };
 
+
 TINCAN.Viewer.prototype.TinCanFormHelper = function(){
 	this.copyQueryStringToForm = function(){
 		var booleanVals = ["context", "authoritative", "sparse"];
@@ -274,9 +243,11 @@ TINCAN.Viewer.prototype.TinCanFormHelper = function(){
 	};
 };
 
+
 TINCAN.Viewer.prototype.searchStatements = function(){
+    var versionsToUse;
 	var helper = new this.TinCanSearchHelper(); 
-	var queryObj = new this.TinCanStatementQueryObject();
+	var queryObj = new TINCAN.StatementQueryObject();
 
 	queryObj.actor = helper.getActor();
 	queryObj.verb = helper.getVerb();
@@ -291,99 +262,51 @@ TINCAN.Viewer.prototype.searchStatements = function(){
 	queryObj.limit = 25;
 
     this.tcapiVersion = helper.getVersion();
-	
-	var url = this.getDriver().recordStores[0].endpoint + "statements?" + queryObj.toString();
-	$("#TCAPIQueryText").text(url);
 
-	this.getStatements(queryObj, this.getCallback(this.renderStatements));
-};
-
-
-TINCAN.Viewer.prototype.getStatements = function(queryObj, callback){
-    var tcViewer = this,
-        versionsToUse = this.allVersions,
-        isMoreQuery = (queryObj == "more"),
-        i, 
-        queue = [],
-        versionHeader,
-        callbackCount,
-        createCallback,
-        version,
-        url;
-
-    //Determine versions to use
-    if(this.tcapiVersion != "all"){
+    //Figure out the versions to use
+    if(this.tcapiVersion == "all"){
+        versionsToUse = this.allVersions;
+    } else {
         versionsToUse = [this.tcapiVersion];
     }
 
-    //If we're continuing some query, only query versions that have more statements
-    if(isMoreQuery){
-        versionsToUse = [];
-        for(var k in this.moreUrls){
-            if(this.moreUrls.hasOwnProperty(k) && this.moreUrls[k] != null){
-                versionsToUse.push(k);
-            }
-        }
-    }
+    //Set the TCAPI query text
+	var url = this.getDriver().recordStores[0].endpoint + "statements?" + queryObj.toString();
+	$("#TCAPIQueryText").text(url);
 
-    //If this is not a continuation query, make sure to reset moreUrls
-    if(!isMoreQuery){
-        this.moreUrls = {};
-    }
-
-
-    //Capture total count of versions to help w/ multiple callbacks below
-    callbackCount = versionsToUse.length;
-
-    //Loop through the versions, setting up callbacks and fetching statements
-    for(i = 0; i < versionsToUse.length; i++){
-        version = versionsToUse[i];
-
-        //Setup a function which will create a callback for this version
-        createCallback = function(version){
-            return function(xhr){
-                var result = JSON.parse(xhr.responseText);       
-
-                //Push this version's statements on the queue, note more url
-                Array.prototype.push.apply(queue, result.statements);
-                tcViewer.moreUrls[version] = result.more;
-
-                //Only do handed in callback after all versions done
-                callbackCount--;
-                if(callbackCount == 0){
-                    queue.sort(function(a,b){
-                        return b.stored.localeCompare(a.stored);
-                    });
-                    callback(queue);
-                }
-            }
-        };
-
-        //Determine url, whether initial query or continuation query
-        url = "statements?" + queryObj.converted(version).toString();
-        if(isMoreQuery){
-            url = this.moreUrls[version].substr(1);
-        }
-
-        //Fetch statements for this version
-        versionHeader = {"X-Experience-API-Version":version};
-        _TCDriver_XHR_request(
-            tcViewer.getDriver().recordStores[0], url, "GET", null, 
-            createCallback(version), false, versionHeader);
-    }
+    this.multiVersionStream = this.getMultiVersionStream(versionsToUse);
+    this.multiVersionStream.loadStatements(queryObj, this.getCallback(this.statementsFetched));
 };
 
 TINCAN.Viewer.prototype.getMoreStatements = function(callback){
-    this.getStatements("more", this.getCallback(this.renderStatements));
+    this.multiVersionStream.loadStatements("more", this.getCallback(this.statementsFetched));
 };
 
-TINCAN.Viewer.prototype.moreStatementsAvailable = function(){
-    for(var k in this.moreUrls){
-        if(this.moreUrls.hasOwnProperty(k) && this.moreUrls[k] != null){
-            return true;
-        }
-    }
-}
+TINCAN.Viewer.prototype.statementsFetched = function(multiStream){
+    var unwiredDivs;
+
+    //If this query led no where, show no statements available method
+	if(multiStream.exhausted()){
+		$("#statementsLoading").hide();
+		$("#noStatementsMessage").show();
+	}
+
+    //Alright, render all available statements
+	$("#statementsLoading").hide();
+	$("#theStatements").append(
+        this.renderStatements(  
+            multiStream.getAllStatements()));
+    
+    //Hook up the "show raw data" links
+	unwiredDivs = $('div[tcid].unwired');
+	unwiredDivs.click(function(){
+		$('[tcid_data="' + $(this).attr('tcid') + '"]').toggle();
+	});
+	unwiredDivs.removeClass('unwired');
+
+    //Show more button?
+    $("#showAllStatements").toggle(!multiStream.exhausted());
+};
 
 TINCAN.Viewer.prototype.renderStatements = function(statements){
     var statements,
@@ -396,24 +319,9 @@ TINCAN.Viewer.prototype.renderStatements = function(statements){
         verb,
         objDesc,
         answer,
-        activityType,
-        unwiredDivs,
-        tcViewer
+        activityType
     ;
 
-
-    //Capture reference to tcViewer object
-    tcViewer = this;
-
-    //If this is the first search, and no results were found, fallback to 0.9
-    if(tcViewer.firstSearch == true){
-        tcViewer.firstSearch = false;
-        if(statements == null || statements.length == 0){
-            $("#versionSelect").val("0.9");
-            tcViewer.searchStatements();
-            return;
-        }
-    }
 
     function escapeHTML(text) {
         return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -694,11 +602,6 @@ TINCAN.Viewer.prototype.renderStatements = function(statements){
     allStmtStr = new Array();
 	allStmtStr.push("<table>");
 
-	if(statements.length == 0){
-		$("#statementsLoading").hide();
-		$("#noStatementsMessage").show();
-	}
-
 	for (i = 0; i < statements.length ; i++){
         stmtStr = [];
 		stmt = statements[i];
@@ -760,21 +663,7 @@ TINCAN.Viewer.prototype.renderStatements = function(statements){
 	}
 	allStmtStr.push("</table>");
 	
-	$("#statementsLoading").hide();
-	
-	$("#theStatements").append(allStmtStr.join(''));
-	unwiredDivs = $('div[tcid].unwired');
-	unwiredDivs.click(function(){
-		$('[tcid_data="' + $(this).attr('tcid') + '"]').toggle();
-	});
-	unwiredDivs.removeClass('unwired');
-
-    //Show more button?
-    if(!tcViewer.moreStatementsAvailable()){
-    	$("#showAllStatements").hide();
-    } else {
-    	$("#showAllStatements").show();
-    }
+    return allStmtStr.join('');
 };
 
 
