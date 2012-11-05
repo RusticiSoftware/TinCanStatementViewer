@@ -1,5 +1,4 @@
 /*
-
    Copyright 2012 Rustici Software, LLC
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,41 +12,39 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
 */
 
 var TINCAN = (TINCAN || {});
 
-
 //An object to help construct Tin Can statement queries
 TINCAN.StatementQueryObject = function(){
 
-	this.verb = null;
-	this.object = null;
-	this.registration = null;
-	this.context = false;
-	this.actor = null;
-	this.since = null;
-	this.until = null;
-	this.limit = 0;
-	this.authoritative = true;
-	this.sparse = false;
-	this.instructor = null;
-	
-	this.toString = function(){
-		var qs = new Array();
-		for(var key in this){
-			var val = this[key];
+    this.verb = null;
+    this.object = null;
+    this.registration = null;
+    this.context = false;
+    this.actor = null;
+    this.since = null;
+    this.until = null;
+    this.limit = 0;
+    this.authoritative = true;
+    this.sparse = false;
+    this.instructor = null;
+
+    this.toString = function(){
+        var qs = new Array();
+        for(var key in this){
+            var val = this[key];
             if(val == null || typeof val == "function"){
                 continue;
             }
-			if(typeof val == "object"){
-				val = JSON.stringify(val);
-			}
-			qs.push(key + "=" + encodeURIComponent(val));
-		}
-		return qs.join("&");
-	};
+            if(typeof val == "object"){
+                val = JSON.stringify(val);
+            }
+            qs.push(key + "=" + encodeURIComponent(val));
+        }
+        return qs.join("&");
+    };
 
     this.upConvertActor = function(actor){
         var converted = null;
@@ -82,13 +79,10 @@ TINCAN.StatementQueryObject = function(){
     };
 };
 
-
-
 //Using the given lrsList, this object will fetch from many LRSs
 //and allow consumers to process those statements by descending stored
 //date, respecting order across the many LRSs
 TINCAN.MultiLrsStatementStream = function(lrsList){
-
     this.getLrsId = function(lrs){
         return lrs.endpoint + lrs.auth + lrs.version;
     };
@@ -139,7 +133,7 @@ TINCAN.MultiLrsStatementStream = function(lrsList){
                     maxDate = recentStatement.stored;
                     nextLrsId = lrsId;
                 }
-            } 
+            }
         }
         return (nextLrsId == null) ? null : this.state[nextLrsId].statements.shift();
     };
@@ -164,7 +158,7 @@ TINCAN.MultiLrsStatementStream = function(lrsList){
             lrsListToUse = this.lrsList,
             lrsId,
             lrsState,
-            i, 
+            i,
             callbackCount,
             createCallback,
             url,
@@ -186,7 +180,6 @@ TINCAN.MultiLrsStatementStream = function(lrsList){
             this.initializeState();
         }
 
-
         //Capture total count of lrs's to help w/ multiple callbacks below
         callbackCount = lrsListToUse.length;
 
@@ -196,7 +189,7 @@ TINCAN.MultiLrsStatementStream = function(lrsList){
             //Setup a function which will create a callback for this lrs fetch
             createCallback = function(lrsId){
                 return function(xhr){
-                    var result = JSON.parse(xhr.responseText);       
+                    var result = JSON.parse(xhr.responseText);
                     var streamState = multiStream.state[lrsId];
 
                     //Capture this lrs's statements into state, note more url
@@ -249,7 +242,4 @@ TINCAN.MultiLrsStatementStream = function(lrsList){
         }
         return true;
     };
-
 };
-
-
