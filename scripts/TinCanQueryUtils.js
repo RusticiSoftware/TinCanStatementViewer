@@ -16,9 +16,8 @@
 
 var TINCAN = (TINCAN || {});
 
-//An object to help construct Tin Can statement queries
-TINCAN.StatementQueryObject = function(){
-
+// An object to help construct Tin Can statement queries
+TINCAN.StatementQueryObject = function () {
     this.verb = null;
     this.object = null;
     this.registration = null;
@@ -30,30 +29,38 @@ TINCAN.StatementQueryObject = function(){
     this.authoritative = true;
     this.sparse = false;
     this.instructor = null;
+};
+TINCAN.StatementQueryObject.prototype = {
+    toString: function () {
+        var qs = [],
+            key,
+            val;
 
-    this.toString = function(){
-        var qs = new Array();
-        for(var key in this){
-            var val = this[key];
-            if(val == null || typeof val == "function"){
-                continue;
+        for (key in this) {
+            if (this.hasOwnProperty(key)) {
+                val = this[key];
+                if (val === null || typeof val === "function") {
+                    continue;
+                }
+                if (typeof val === "object") {
+                    val = JSON.stringify(val);
+                }
+                qs.push(key + "=" + encodeURIComponent(val));
             }
-            if(typeof val == "object"){
-                val = JSON.stringify(val);
-            }
-            qs.push(key + "=" + encodeURIComponent(val));
         }
         return qs.join("&");
-    };
+    },
 
-    this.upConvertActor = function(actor){
+    // TODO: TinCanJS does this for us?
+    //       put these on the prototype if they are kept
+    upConvertActor: function (actor) {
         var converted = null;
-        if(actor != null){
+        if (actor !== null) {
             converted = {};
-            if(actor.mbox != null && typeof actor.mbox != "string"){
+            if (actor.mbox !== null && typeof actor.mbox !== "string") {
                 converted.mbox = actor.mbox[0];
             }
-            if(actor.account != null && typeof actor.account[0] != "undefined"){
+            if (actor.account !== null && typeof actor.account[0] !== "undefined") {
                 converted.account = {
                     homePage: actor.account[0].accountServiceHomePage,
                     name: actor.account[0].accountName
@@ -61,14 +68,17 @@ TINCAN.StatementQueryObject = function(){
             }
         }
         return converted;
-    };
+    },
 
-    this.converted = function(version){
-        var obj = this;
-        if(version != "0.9"){
+    // TODO: TinCanJS does this for us?
+    //       put these on the prototype if they are kept
+    converted: function (version) {
+        var obj = this,
+            k;
+        if (version !== "0.9") {
             obj = {};
-            for(var k in this){
-                if(this.hasOwnProperty(k)){
+            for (k in this) {
+                if (this.hasOwnProperty(k)) {
                     obj[k] = this[k];
                 }
             }
@@ -76,85 +86,88 @@ TINCAN.StatementQueryObject = function(){
             obj.instructor = this.upConvertActor(obj.instructor);
         }
         return obj;
-    };
+    }
 };
 
-//Using the given lrsList, this object will fetch from many LRSs
-//and allow consumers to process those statements by descending stored
-//date, respecting order across the many LRSs
-TINCAN.MultiLrsStatementStream = function(lrsList){
-    this.getLrsId = function(lrs){
-        return lrs.endpoint + lrs.auth + lrs.version;
-    };
-
-    this.initializeState = function(){
-        var i, lrs;
-        this.state = {};
-        for(i = 0; i < this.lrsList.length; i++){
-            lrs = lrsList[i];
-            this.state[this.getLrsId(lrs)] = {
-                "lrs":lrs,
-                "statements":[],
-                "moreUrl":null
-            };
-        }
-    };
-
+//
+// Using the given lrsList, this object will fetch from many LRSs
+// and allow consumers to process those statements by descending stored
+// date, respecting order across the many LRSs
+//
+TINCAN.MultiLrsStatementStream = function (lrsList) {
     this.lrsList = lrsList;
     this.state = {};
+
     this.initializeState();
+};
+TINCAN.MultiLrsStatementStream.prototype = {
+    getLrsId: function (lrs) {
+        return lrs.endpoint + lrs.auth + lrs.version;
+    },
 
+    initializeState: function () {
+        var i, lrs;
+        for (i = 0; i < this.lrsList.length; i += 1) {
+            lrs = this.lrsList[i];
+            this.state[this.getLrsId(lrs)] = {
+                lrs: lrs,
+                statements: [],
+                moreUrl: null
+            };
+        }
+    },
 
-    this.getIdMap = function(){
+    getIdMap: function () {
         var k, ids = {};
-        for(k in this.state){
-            if(this.state.hasOwnProperty(k)){
+        for (k in this.state) {
+            if (this.state.hasOwnProperty(k)) {
                 ids[k] = true;
             }
-        };
+        }
         return ids;
-    };
+    },
 
-
-    //Returns the next statement from the given statement streams based
-    //on most recent stored date.
-    this.getNextStatement = function(){
+    // Returns the next statement from the given statement streams based
+    // on most recent stored date.
+    getNextStatement: function () {
         var lrsId, lrsState, recentStatement, maxDate = "0", nextLrsId;
-        for(lrsId in this.getIdMap()){
+
+        for (lrsId in this.getIdMap()) {
             lrsState = this.state[lrsId];
-            //We have to stop giving statements here because the most recent
-            //statement could be one we haven't yet fetched
-            if(lrsState.statements.length == 0 && lrsState.moreUrl != null){
+
+            // We have to stop giving statements here because the most recent
+            // statement could be one we haven't yet fetched
+            if (lrsState.statements.length === 0 && lrsState.moreUrl !== null) {
                 return null;
             }
-            if(lrsState.statements.length > 0){
+            if (lrsState.statements.length > 0) {
                 recentStatement = lrsState.statements[0];
-                if(recentStatement.stored.localeCompare(maxDate) > 0){
+                if (recentStatement.stored.localeCompare(maxDate) > 0) {
                     maxDate = recentStatement.stored;
                     nextLrsId = lrsId;
                 }
             }
         }
-        return (nextLrsId == null) ? null : this.state[nextLrsId].statements.shift();
-    };
+        return (nextLrsId === null) ? null : this.state[nextLrsId].statements.shift();
+    },
 
-    //Use getNextStatement to get all loaded statements that can be
-    //guaranteed to be in order
-    this.getAllStatements = function(){
+    // Use getNextStatement to get all loaded statements that can be
+    // guaranteed to be in order
+    getAllStatements: function () {
         var stmt, statements = [];
         stmt = this.getNextStatement();
-        while(stmt != null){
+        while (stmt !== null) {
             statements.push(stmt);
             stmt = this.getNextStatement();
         }
         return statements;
-    };
+    },
 
-    //Load statements from multiple LRSs, and call the given callback when
-    //those statements are ready passing in this multi stream object as the argument
-    this.loadStatements = function(queryObj, callback){
+    // Load statements from multiple LRSs, and call the given callback when
+    // those statements are ready passing in this multi stream object as the argument
+    loadStatements: function (queryObj, callback) {
         var multiStream = this,
-            isMoreQuery = (queryObj == "more"),
+            isMoreQuery = (queryObj === "more"),
             lrsListToUse = this.lrsList,
             lrsId,
             lrsState,
@@ -164,82 +177,81 @@ TINCAN.MultiLrsStatementStream = function(lrsList){
             url,
             versionHeader;
 
-        //If we're continuing some query, only query lrs's that have more statements
-        if(isMoreQuery){
+        if (isMoreQuery) {
+            // If we're continuing some query, only query lrs's that have more statements
             lrsListToUse = [];
-            for(lrsId in this.getIdMap()){
+            for (lrsId in this.getIdMap()) {
                 lrsState = this.state[lrsId];
-                if(lrsState.statements.length <= 10 && lrsState.moreUrl != null){
+                if (lrsState.statements.length <= 10 && lrsState.moreUrl !== null) {
                     lrsListToUse.push(this.state[lrsId].lrs);
                 }
             }
-        }
-
-        //If this is not a continuation query, make sure to reset moreUrls
-        if(!isMoreQuery){
+        } else {
+            // If this is not a continuation query, make sure to reset moreUrls
             this.initializeState();
         }
 
-        //Capture total count of lrs's to help w/ multiple callbacks below
+        // Capture total count of lrs's to help w/ multiple callbacks below
         callbackCount = lrsListToUse.length;
 
-        //Loop through the lrs's, setting up callbacks and fetching statements
-        for(i = 0; i < lrsListToUse.length; i++){
+        // Setup a function which will create a callback for this lrs fetch
+        createCallback = function (lrsId) {
+            return function (stResult) {
+                console.log("createCallback - in callback: " + stResult);
+                var streamState = multiStream.state[lrsId];
 
-            //Setup a function which will create a callback for this lrs fetch
-            createCallback = function(lrsId){
-                return function(xhr){
-                    var result = JSON.parse(xhr.responseText);
-                    var streamState = multiStream.state[lrsId];
+                // Capture this lrs's statements into state, note more url
+                Array.prototype.push.apply(streamState.statements, stResult.statements);
+                streamState.moreUrl = stResult.more;
 
-                    //Capture this lrs's statements into state, note more url
-                    Array.prototype.push.apply(streamState.statements, result.statements);
-                    streamState.moreUrl = result.more;
-
-                    //Only do handed in callback after all versions done
-                    callbackCount--;
-                    if(callbackCount == 0){
-                        callback(multiStream);
-                    }
+                // Only do handed in callback after all versions done
+                callbackCount--;
+                if (callbackCount === 0) {
+                    callback(multiStream);
                 }
             };
+        };
 
-            //Get reference to lrs we're using
+        // Loop through the lrs's, setting up callbacks and fetching statements
+        for (i = 0; i < lrsListToUse.length; i += 1) {
+            // Get reference to lrs we're using
             lrs = lrsListToUse[i];
             lrsId = this.getLrsId(lrs);
 
-            //Determine url, whether initial query or continuation query
-            if(!isMoreQuery){
-                url = "statements?" + queryObj.converted(lrs.version).toString();
+            if (!isMoreQuery) {
+                lrs.queryStatements(
+                    {
+                        params: queryObj,
+                        callback: createCallback(lrsId)
+                    }
+                );
             } else {
-                url = this.state[lrsId].moreUrl;
+                lrs.moreStatements(
+                    {
+                        callback: createCallback(lrsId)
+                    }
+                );
             }
-
-            //Fetch statements for this version
-            versionHeader = {"X-Experience-API-Version":lrs.version};
-            _TCDriver_XHR_request(
-                lrs, url, "GET", null, 
-                createCallback(lrsId), false, versionHeader);
         }
-    };
+    },
 
-    //Load more statements from the saved multiple LRSs and current query
-    //started with loadStatements. Call callback when statements are ready,
-    //passing in this multi stream object as the argument
-    this.loadMoreStatements = function(callback){
+    // Load more statements from the saved multiple LRSs and current query
+    // started with loadStatements. Call callback when statements are ready,
+    // passing in this multi stream object as the argument
+    loadMoreStatements: function (callback) {
         this.loadStatements("more", callback);
-    };
+    },
 
-    //Returns true if there are no more statements available, whether fetched
-    //or potentially available through a continuation query (i.e. "more" url)
-    this.exhausted = function(){
+    // Returns true if there are no more statements available, whether fetched
+    // or potentially available through a continuation query (i.e. "more" url)
+    exhausted: function () {
         var lrsId, lrsState;
-        for(lrsId in this.getIdMap()){
+        for (lrsId in this.getIdMap()) {
             lrsState = this.state[lrsId];
-            if(lrsState.statements.length > 0 || lrsState.moreUrl != null){
+            if (lrsState.statements.length > 0 || lrsState.moreUrl !== null) {
                 return false;
             }
         }
         return true;
-    };
+    }
 };
