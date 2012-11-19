@@ -24,7 +24,7 @@ TINCAN.Viewer = function () {
         lrs;
 
     this.includeRawData = true;
-    this.allVersions = ["0.9", "0.95"];
+    this.allVersions = ["0.95", "0.90"];
     this.multiVersionStream = null;
     this.lrses = {};
 
@@ -62,47 +62,75 @@ TINCAN.Viewer.prototype.getMultiVersionStream = function (versionList) {
         lrsList.push(this.lrses[versionList[i]]);
     }
 
-    return new TINCAN.MultiLrsStatementStream(lrsList);
+    return new TINCAN.MultiLRSStatementStream(lrsList);
 };
 
 TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
     this.getActor = function () {
-        var actor,
+        var actor = null,
             actorJson = this.getSearchVar("actorJson"),
             actorEmail = this.getSearchVar("actorEmail");
 
-        if (typeof actorJson !== "undefined" && actorJson.length > 0) {
-            actor = TinCan.Actor.fromJSON(actorJson);
+        if (actorJson !== null && actorJson.length > 0) {
+            actor = TinCan.Agent.fromJSON(actorJson);
         }
-        else if (typeof actorEmail !== "undefined") {
+        else if (actorEmail !== null) {
             actor = new TinCan.Agent(
                 {
                     mbox: actorEmail
                 }
             );
         }
+
         return actor;
     };
 
     this.getVerb = function () {
-        return this.getSearchVar("verb");
+        var verbStr = this.getSearchVar("verb"),
+            verb = null
+        ;
+        if (verbStr !== null && verbStr.length > 0) {
+            verb = new TinCan.Verb (verbStr);
+        }
+        return verb;
     };
 
-    this.getObject = function () {
+    this.getTarget = function () {
         var obj = null,
             objectJson = this.getSearchVar("objectJson"),
             activityId;
 
-        if (typeof objectJson !== "undefined") {
+        if (objectJson !== null) {
+            // TODO: protect JSON.parse
             obj = JSON.parse(objectJson);
+            if (typeof obj.objectType === "undefined") {
+                // assumed to be activity
+                obj.objectType = "Activity";
+            }
+
+            if (obj.objectType === "Activity") {
+                obj = new TinCan.Activity (obj);
+            }
+            else if (obj.objectType === "Agent") {
+                obj = new TinCan.Agent (obj);
+            }
+            else if (obj.objectType === "SubStatement") {
+                obj = new TinCan.SubStatement (obj);
+            }
+            else if (obj.objectType === "StatementRef") {
+                obj = new TinCan.StatementRef (obj);
+            }
         } else {
             activityId = this.getSearchVar("activityId");
-            if (typeof activityId !== "undefined") {
-                obj = {
-                    id: activityId
-                };
+            if (activityId !== null) {
+                obj = new TinCan.Activity (
+                    {
+                        id: activityId
+                    }
+                );
             }
         }
+
         return obj;
     };
 
@@ -110,8 +138,13 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
         return this.getSearchVar("registration");
     };
 
-    this.getContext = function () {
-        return this.getSearchVarAsBoolean("context", "false");
+    this.getInstructor = function () {
+        var instructorJson = this.getSearchVar("instructorJson"),
+            instructor = null;
+        if (instructorJson !== null && instructorJson.length > 0) {
+            instructor = TinCan.Agent.fromJSON(instructorJson);
+        }
+        return instructor;
     };
 
     this.getSince = function () {
@@ -130,20 +163,16 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
         return until;
     };
 
+    this.getContext = function () {
+        return this.getSearchVarAsBoolean("context", "false");
+    };
+
     this.getAuthoritative = function () {
         return this.getSearchVarAsBoolean("authoritative", "true");
     };
 
     this.getSparse = function () {
         return this.getSearchVarAsBoolean("sparse", "false");
-    };
-
-    this.getInstructor = function () {
-        var instructorJson = this.getSearchVar("instructorJson");
-        if (typeof instructorJson !== "undefined") {
-            return JSON.parse(instructorJson);
-        }
-        return null;
     };
 
     this.getVersion = function () {
@@ -154,14 +183,13 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
         return typeof str !== "undefined" && (str.indexOf("+") >= 0 || str.indexOf("Z") >= 0);
     };
 
-    this.nonEmptyStringOrNull = function (str) {
-        return (typeof str !== "undefined" && str.length > 0) ? str : null;
-    };
-
     this.getSearchVar = function (searchVarName, defaultVal) {
         var myVar = $("#"+searchVarName).val();
         if (myVar === null || myVar.length < 1) {
-            return defaultVal;
+            if (typeof defaultVal !== "undefined") {
+                return defaultVal;
+            }
+            return null;
         }
         return myVar;
     };
@@ -226,19 +254,44 @@ TINCAN.Viewer.prototype.searchStatements = function () {
     var selectVersion,
         versionsToUse,
         helper = new this.TinCanSearchHelper(),
-        queryObj = new TINCAN.StatementQueryObject();
+        queryObj = {
+            limit: 25,
+            context: helper.getContext(),
+            authoritative: helper.getAuthoritative(),
+            sparse: helper.getSparse()
+        },
+        requestCfg,
+        url,
+        urlPairs = [],
+        actor = helper.getActor(),
+        verb = helper.getVerb(),
+        target = helper.getTarget(),
+        registration = helper.getRegistration(),
+        since = helper.getSince(),
+        until = helper.getUntil(),
+        instructor = helper.getInstructor();
 
-    queryObj.actor = helper.getActor();
-    queryObj.verb = helper.getVerb();
-    queryObj.object = helper.getObject();
-    queryObj.registration = helper.getRegistration();
-    queryObj.context = helper.getContext();
-    queryObj.since = helper.getSince();
-    queryObj.until = helper.getUntil();
-    queryObj.authoritative = helper.getAuthoritative();
-    queryObj.sparse = helper.getSparse();
-    queryObj.instructor = helper.getInstructor();
-    queryObj.limit = 25;
+    if (actor !== null) {
+        queryObj.actor = actor;
+    }
+    if (verb !== null) {
+        queryObj.verb = verb;
+    }
+    if (target !== null) {
+        queryObj.target = target;
+    }
+    if (registration !== null) {
+        queryObj.registration = registration;
+    }
+    if (instructor !== null) {
+        queryObj.instructor = instructor;
+    }
+    if (since !== null) {
+        queryObj.since = since;
+    }
+    if (until !== null) {
+        queryObj.until = until;
+    }
 
     selectVersion = helper.getVersion();
 
@@ -249,13 +302,15 @@ TINCAN.Viewer.prototype.searchStatements = function () {
         versionsToUse = [ selectVersion ];
     }
 
-    // TODO: restore this
-    // Set the TCAPI query text
-    //var url = this.getDriver().recordStores[0].endpoint + "statements?" + queryObj.toString();
-    //$("#TCAPIQueryText").text(url);
-
     this.multiVersionStream = this.getMultiVersionStream(versionsToUse);
-    this.multiVersionStream.loadStatements(queryObj, this.getCallback(this.statementsFetched));
+    requestCfg = this.multiVersionStream.loadStatements(queryObj, this.getCallback(this.statementsFetched));
+
+    // Set the TCAPI query text
+    for (prop in requestCfg.params) {
+        urlPairs.push(prop + "=" + encodeURIComponent(requestCfg.params[prop]));
+    }
+    url = this.lrses[versionsToUse[0]].endpoint + requestCfg.url + "?" + urlPairs.join("&");
+    $("#TCAPIQueryText").text(url);
 };
 
 TINCAN.Viewer.prototype.getMoreStatements = function (callback) {
@@ -314,7 +369,6 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
         return str.substr(0, length - 3) + '...';
     }
 
-    // TODO: is any of this better off in TinCanJS?
     function getResponseText (stmt) {
         var response,
             objDef,
@@ -336,6 +390,7 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
         response = stmt.result.response;
 
         if (stmt.target === null ||
+            stmt.target.objectType !== "Activity" ||
             stmt.target.definition === null ||
             stmt.target.definition.type !== "cmi.interaction" ||
             stmt.target.definition.interactionType === null
@@ -456,7 +511,7 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
 
             answer = null;
 
-            if (typeof stmt.target.definition !== null) {
+            if (typeof stmt.target.definition !== "undefined" && stmt.target.definition !== null) {
                 activityType = stmt.target.definition.type;
                 if (activityType !== null && (activityType === "question" || activityType.indexOf("interaction") >= 0)) {
                     if (stmt.result !== null) {
@@ -472,7 +527,7 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
 
             stmtStr.push(" <span class='verb'>" + escapeHTML(verb) + "</span>");
             stmtStr.push(" <span class='object'>'" + escapeHTML(stmt.target) + "'</span>");
-            stmtStr.push(answer !== null ? answer : ".");
+            stmtStr.push(answer !== null ? answer : "");
 
             if (stmt.result !== null && stmt.result.score !== null) {
                 if (stmt.result.score.scaled !== null) {

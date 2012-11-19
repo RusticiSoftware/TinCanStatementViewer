@@ -16,91 +16,18 @@
 
 var TINCAN = (TINCAN || {});
 
-// An object to help construct Tin Can statement queries
-TINCAN.StatementQueryObject = function () {
-    this.verb = null;
-    this.object = null;
-    this.registration = null;
-    this.context = false;
-    this.actor = null;
-    this.since = null;
-    this.until = null;
-    this.limit = 0;
-    this.authoritative = true;
-    this.sparse = false;
-    this.instructor = null;
-};
-TINCAN.StatementQueryObject.prototype = {
-    toString: function () {
-        var qs = [],
-            key,
-            val;
-
-        for (key in this) {
-            if (this.hasOwnProperty(key)) {
-                val = this[key];
-                if (val === null || typeof val === "function") {
-                    continue;
-                }
-                if (typeof val === "object") {
-                    val = JSON.stringify(val);
-                }
-                qs.push(key + "=" + encodeURIComponent(val));
-            }
-        }
-        return qs.join("&");
-    },
-
-    // TODO: TinCanJS does this for us?
-    //       put these on the prototype if they are kept
-    upConvertActor: function (actor) {
-        var converted = null;
-        if (actor !== null) {
-            converted = {};
-            if (actor.mbox !== null && typeof actor.mbox !== "string") {
-                converted.mbox = actor.mbox[0];
-            }
-            if (actor.account !== null && typeof actor.account[0] !== "undefined") {
-                converted.account = {
-                    homePage: actor.account[0].accountServiceHomePage,
-                    name: actor.account[0].accountName
-                };
-            }
-        }
-        return converted;
-    },
-
-    // TODO: TinCanJS does this for us?
-    //       put these on the prototype if they are kept
-    converted: function (version) {
-        var obj = this,
-            k;
-        if (version !== "0.9") {
-            obj = {};
-            for (k in this) {
-                if (this.hasOwnProperty(k)) {
-                    obj[k] = this[k];
-                }
-            }
-            obj.actor = this.upConvertActor(obj.actor);
-            obj.instructor = this.upConvertActor(obj.instructor);
-        }
-        return obj;
-    }
-};
-
 //
 // Using the given lrsList, this object will fetch from many LRSs
 // and allow consumers to process those statements by descending stored
 // date, respecting order across the many LRSs
 //
-TINCAN.MultiLrsStatementStream = function (lrsList) {
+TINCAN.MultiLRSStatementStream = function (lrsList) {
     this.lrsList = lrsList;
     this.state = {};
 
     this.initializeState();
 };
-TINCAN.MultiLrsStatementStream.prototype = {
+TINCAN.MultiLRSStatementStream.prototype = {
     getLrsId: function (lrs) {
         return lrs.endpoint + lrs.auth + lrs.version;
     },
@@ -130,7 +57,7 @@ TINCAN.MultiLrsStatementStream.prototype = {
     // Returns the next statement from the given statement streams based
     // on most recent stored date.
     getNextStatement: function () {
-        var lrsId, lrsState, recentStatement, maxDate = "0", nextLrsId;
+        var lrsId, lrsState, recentStatement, maxDate = "0", nextLrsId = null;
 
         for (lrsId in this.getIdMap()) {
             lrsState = this.state[lrsId];
@@ -175,7 +102,9 @@ TINCAN.MultiLrsStatementStream.prototype = {
             callbackCount,
             createCallback,
             url,
-            versionHeader;
+            versionHeader,
+            _requestCfg,
+            requestCfg = null;
 
         if (isMoreQuery) {
             // If we're continuing some query, only query lrs's that have more statements
@@ -197,7 +126,6 @@ TINCAN.MultiLrsStatementStream.prototype = {
         // Setup a function which will create a callback for this lrs fetch
         createCallback = function (lrsId) {
             return function (stResult) {
-                console.log("createCallback - in callback: " + stResult);
                 var streamState = multiStream.state[lrsId];
 
                 // Capture this lrs's statements into state, note more url
@@ -219,20 +147,26 @@ TINCAN.MultiLrsStatementStream.prototype = {
             lrsId = this.getLrsId(lrs);
 
             if (!isMoreQuery) {
-                lrs.queryStatements(
+                _requestCfg = lrs.queryStatements(
                     {
                         params: queryObj,
                         callback: createCallback(lrsId)
                     }
                 );
+                if (requestCfg === null) {
+                    requestCfg = _requestCfg;
+                }
             } else {
                 lrs.moreStatements(
                     {
+                        url: this.state[lrsId].moreUrl,
                         callback: createCallback(lrsId)
                     }
                 );
             }
         }
+
+        return requestCfg;
     },
 
     // Load more statements from the saved multiple LRSs and current query
