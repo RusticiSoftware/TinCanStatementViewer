@@ -69,8 +69,10 @@ TINCAN.MultiLRSStatementStream.prototype = {
             }
             if (lrsState.statements.length > 0) {
                 recentStatement = lrsState.statements[0];
-                if (recentStatement.stored.localeCompare(maxDate) > 0) {
-                    maxDate = recentStatement.stored;
+                if (recentStatement.stored === null || recentStatement.stored.localeCompare(maxDate) > 0) {
+                    if (recentStatement.stored !== null) {
+                        maxDate = recentStatement.stored;
+                    }
                     nextLrsId = lrsId;
                 }
             }

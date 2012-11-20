@@ -485,6 +485,7 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
     for (i = 0; i < statements.length; i += 1) {
         stmtStr = [];
         stmt = statements[i];
+        //this.log("-------------------------------" + stmt.id + "-------------------------------");
 
         stmtStr.push("<tr class='statementRow'>");
         stmtStr.push("<td class='date'><div class='statementDate'>" + (stmt.stored !== null ? stmt.stored.replace('Z','') : "") + "</div></td>");
@@ -492,7 +493,7 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
         stmtStr.push("<div class='statement unwired' tcid='" + stmt.id + "'>");
 
         try {
-            stmtStr.push("<span class='actor'>" + escapeHTML(stmt.actor) + "</span>");
+            stmtStr.push("<span class='actor'>" + (stmt.actor !== null ? escapeHTML(stmt.actor) : "No Actor") + "</span> ");
 
             if (stmt.context !== null &&
                 stmt.context.extensions !== null &&
@@ -525,8 +526,8 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
                 }
             }
 
-            stmtStr.push(" <span class='verb'>" + escapeHTML(verb) + "</span>");
-            stmtStr.push(" <span class='object'>'" + escapeHTML(stmt.target) + "'</span>");
+            stmtStr.push(" <span class='verb'>" + escapeHTML(verb) + "</span> ");
+            stmtStr.push(" <span class='object'>'" + escapeHTML(stmt.target) + "'</span> ");
             stmtStr.push(answer !== null ? answer : "");
 
             if (stmt.result !== null && stmt.result.score !== null) {
@@ -539,6 +540,7 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
         }
         catch (error) {
             this.log("Error occurred while trying to display statement with id " + stmt.id + ": " + error.message);
+            //this.log("-------------------------------" + stmt.id + "-------------------------------");
             stmtStr.push("<span class='stId'>" + stmt.id + "</span>");
         }
         stmtStr.push("</div>");
@@ -551,6 +553,7 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
 
         stmtStr.push("</td></tr>");
         allStmtStr.push(stmtStr.join(''));
+        //this.log("-------------------------------" + stmt.id + "-------------------------------");
     }
     allStmtStr.push("</table>");
 
