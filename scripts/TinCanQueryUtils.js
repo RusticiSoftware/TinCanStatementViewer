@@ -127,7 +127,7 @@ TINCAN.MultiLRSStatementStream.prototype = {
 
         // Setup a function which will create a callback for this lrs fetch
         createCallback = function (lrsId) {
-            return function (stResult) {
+            return function (err, stResult) {
                 var streamState = multiStream.state[lrsId];
 
                 // Capture this lrs's statements into state, note more url
