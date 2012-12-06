@@ -2,6 +2,8 @@
 
 .container { padding-bottom: 40px; }
 
+#theStatements table { width: 100%; }
+
 .statement {margin:3px 0;}
 
 .statement table {width:100%;}
