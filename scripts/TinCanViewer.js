@@ -24,7 +24,7 @@ TINCAN.Viewer = function () {
         lrs;
 
     this.includeRawData = true;
-    this.allVersions = ["0.95", "0.90"];
+    this.allVersions = ["0.95", "0.9"];
     this.multiVersionStream = null;
     this.lrses = {};
 
