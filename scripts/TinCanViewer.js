@@ -28,15 +28,17 @@ TINCAN.Viewer = function () {
     this.multiVersionStream = null;
     this.lrses = {};
 
-    for (i = 0; i < this.allVersions.length; i += 1) {
-        this.log("TINCAN.Viewer version: " + this.allVersions[i]);
-        this.lrses[this.allVersions[i]] = new TinCan.LRS (
-            {
-                endpoint: Config.endpoint,
-                auth: 'Basic ' + Base64.encode(Config.authUser + ':' + Config.authPassword),
-                version: this.allVersions[i]
-            }
-        );
+    if (typeof Config === "object") {
+        for (i = 0; i < this.allVersions.length; i += 1) {
+            this.log("TINCAN.Viewer version: " + this.allVersions[i]);
+            this.lrses[this.allVersions[i]] = new TinCan.LRS (
+                {
+                    endpoint: Config.endpoint,
+                    auth: 'Basic ' + Base64.encode(Config.authUser + ':' + Config.authPassword),
+                    version: this.allVersions[i]
+                }
+            );
+        }
     }
 };
 
