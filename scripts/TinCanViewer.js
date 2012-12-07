@@ -28,7 +28,7 @@ TINCAN.Viewer = function () {
     this.multiVersionStream = null;
     this.lrses = {};
 
-    if (typeof Config === "object") {
+    if (typeof Config !== "undefined") {
         for (i = 0; i < this.allVersions.length; i += 1) {
             this.log("TINCAN.Viewer version: " + this.allVersions[i]);
             this.lrses[this.allVersions[i]] = new TinCan.LRS (
