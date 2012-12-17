@@ -129,13 +129,15 @@ TINCAN.MultiLRSStatementStream.prototype = {
         createCallback = function (lrsId) {
             return function (err, stResult) {
                 var streamState = multiStream.state[lrsId];
+                callbackCount--;
 
-                // Capture this lrs's statements into state, note more url
-                Array.prototype.push.apply(streamState.statements, stResult.statements);
-                streamState.moreUrl = stResult.more;
+                if (err === null) {
+                    // Capture this lrs's statements into state, note more url
+                    Array.prototype.push.apply(streamState.statements, stResult.statements);
+                    streamState.moreUrl = stResult.more;
+                }
 
                 // Only do handed in callback after all versions done
-                callbackCount--;
                 if (callbackCount === 0) {
                     callback(multiStream);
                 }
