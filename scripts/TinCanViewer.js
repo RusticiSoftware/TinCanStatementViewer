@@ -262,7 +262,7 @@ TINCAN.Viewer.prototype.searchStatements = function () {
             authoritative: helper.getAuthoritative(),
             sparse: helper.getSparse()
         },
-        requestCfg,
+        requestResult,
         url,
         urlPairs = [],
         actor = helper.getActor(),
@@ -305,13 +305,13 @@ TINCAN.Viewer.prototype.searchStatements = function () {
     }
 
     this.multiVersionStream = this.getMultiVersionStream(versionsToUse);
-    requestCfg = this.multiVersionStream.loadStatements(queryObj, this.getCallback(this.statementsFetched));
+    requestResult = this.multiVersionStream.loadStatements(queryObj, this.getCallback(this.statementsFetched));
 
     // Set the TCAPI query text
-    for (prop in requestCfg.params) {
-        urlPairs.push(prop + "=" + encodeURIComponent(requestCfg.params[prop]));
+    for (prop in requestResult.config.params) {
+        urlPairs.push(prop + "=" + encodeURIComponent(requestResult.config.params[prop]));
     }
-    url = this.lrses[versionsToUse[0]].endpoint + requestCfg.url + "?" + urlPairs.join("&");
+    url = this.lrses[versionsToUse[0]].endpoint + requestResult.config.url + "?" + urlPairs.join("&");
     $("#TCAPIQueryText").text(url);
 };
 
