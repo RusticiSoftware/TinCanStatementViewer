@@ -74,17 +74,9 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
     };
 
     this.getVerb = function () {
-        var verbStr = this.getSearchVar("verb"),
-            verb = null
-        ;
-        if (verbStr !== null && verbStr.length > 0) {
-            verb = new TinCan.Verb (verbStr);
-        }
-        return verb;
-    };
-
-    this.getVerb1 = function () {
-        var verbStr = this.getSearchVar("verb1"),
+        var verbStr = this.getSearchVar(
+                this.getVersion().indexOf("0.9") === -1 ? "verb1" : "verb"
+            ),
             verb = null
         ;
         if (verbStr !== null && verbStr.length > 0) {
@@ -94,23 +86,11 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
     };
 
     this.getRegistration = function () {
-        return this.getSearchVar("registration");
-    };
-
-    this.getRegistration1 = function () {
-        return this.getSearchVar("registration1");
+        return this.getSearchVar(this.getVersion().indexOf("0.9") === -1 ? "registration1" : "registration");
     };
 
     this.getSince = function () {
-        var since = this.getSearchVar("since");
-        if (since !== null && !this.dateStrIncludesTimeZone(since)) {
-            since = since + "Z";
-        }
-        return since;
-    };
-
-    this.getSince1 = function () {
-        var since = this.getSearchVar("since1");
+        var since = this.getSearchVar(this.getVersion().indexOf("0.9") === -1 ? "since1" : "since");
         if (since !== null && !this.dateStrIncludesTimeZone(since)) {
             since = since + "Z";
         }
@@ -118,15 +98,7 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
     };
 
     this.getUntil = function () {
-        var until = this.getSearchVar("until");
-        if (until !== null && !this.dateStrIncludesTimeZone(until)) {
-            until = until + "Z";
-        }
-        return until;
-    };
-
-    this.getUntil1 = function () {
-        var until = this.getSearchVar("until1");
+        var until = this.getSearchVar(this.getVersion().indexOf("0.9") === -1 ? "until1" : "until");
         if (until !== null && !this.dateStrIncludesTimeZone(until)) {
             until = until + "Z";
         }
@@ -322,39 +294,46 @@ TINCAN.Viewer.prototype.TinCanFormHelper = function () {
     };
 };
 
-TINCAN.Viewer.prototype.pre1QueryObj = function (helper) {
+TINCAN.Viewer.prototype.commonQueryObj = function (helper) {
     var queryObj = {},
-        actor = helper.getActor(),
         verb = helper.getVerb(),
-        target = helper.getTarget(),
         registration = helper.getRegistration(),
         since = helper.getSince(),
-        until = helper.getUntil(),
+        until = helper.getUntil();
+
+    if (verb !== null) {
+        queryObj.verb = verb;
+    }
+    if (registration !== null) {
+        queryObj.registration = registration;
+    }
+    if (since !== null) {
+        queryObj.since = since;
+    }
+    if (until !== null) {
+        queryObj.until = until;
+    }
+
+    return queryObj;
+};
+
+TINCAN.Viewer.prototype.pre1QueryObj = function (helper) {
+    var queryObj = this.commonQueryObj(helper),
+        actor = helper.getActor(),
+        target = helper.getTarget(),
         instructor = helper.getInstructor(),
         context = helper.getContext(),
         sparse = helper.getSparse(),
         authoritative = helper.getAuthoritative();
 
-    if (verb !== null) {
-        queryObj.verb = verb;
-    }
-    if (instructor !== null) {
-        queryObj.instructor = instructor;
-    }
-    if (since !== null) {
-        queryObj.since = since;
-    }
-    if (registration !== null) {
-        queryObj.registration = registration;
-    }
-    if (until !== null) {
-        queryObj.until = until;
-    }
     if (actor !== null) {
         queryObj.actor = actor;
     }
     if (target !== null) {
         queryObj.target = target;
+    }
+    if (instructor !== null) {
+        queryObj.instructor = instructor;
     }
     if (context !== null) {
         queryObj.context = context;
@@ -370,13 +349,9 @@ TINCAN.Viewer.prototype.pre1QueryObj = function (helper) {
 };
 
 TINCAN.Viewer.prototype.v1QueryObj = function (helper) {
-    var queryObj = {},
+    var queryObj = this.commonQueryObj(helper),
         agent = helper.getAgent(),
-        verb = helper.getVerb1(),
         activity = helper.getActivity(),
-        registration = helper.getRegistration1(),
-        since = helper.getSince1(),
-        until = helper.getUntil1(),
         format = helper.getFormat()
         relatedAgents = helper.getRelatedAgents()
         relatedActivities = helper.getRelatedActivities()
@@ -385,23 +360,11 @@ TINCAN.Viewer.prototype.v1QueryObj = function (helper) {
     if (agent !== null) {
         queryObj.agent = agent;
     }
-    if (verb !== null) {
-        queryObj.verb = verb;
-    }
     if (activity !== null) {
         queryObj.activity = activity;
     }
-    if (since !== null) {
-        queryObj.since = since;
-    }
-    if (until !== null) {
-        queryObj.until = until;
-    }
     if (format !== null) {
         queryObj.format = format;
-    }
-    if (registration !== null) {
-        queryObj.registration = registration;
     }
     if (relatedAgents !== null) {
         queryObj.related_agents = relatedAgents;
