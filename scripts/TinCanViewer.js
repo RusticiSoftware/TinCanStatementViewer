@@ -24,7 +24,7 @@ TINCAN.Viewer = function () {
         lrs;
 
     this.includeRawData = true;
-    this.allVersions = ["0.95", "0.9"];
+    this.allVersions = ["1.0.0", "0.95", "0.9"];
     this.multiVersionStream = null;
     this.lrses = {};
 
@@ -34,7 +34,8 @@ TINCAN.Viewer = function () {
             this.lrses[this.allVersions[i]] = new TinCan.LRS (
                 {
                     endpoint: Config.endpoint,
-                    auth: 'Basic ' + Base64.encode(Config.authUser + ':' + Config.authPassword),
+                    username: Config.authUser,
+                    password: Config.authPassword,
                     version: this.allVersions[i]
                 }
             );
@@ -68,6 +69,85 @@ TINCAN.Viewer.prototype.getMultiVersionStream = function (versionList) {
 };
 
 TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
+    this.getVersion = function () {
+        return this.getSearchVar("version") || "latest";
+    };
+
+    this.getVerb = function () {
+        var verbStr = this.getSearchVar("verb"),
+            verb = null
+        ;
+        if (verbStr !== null && verbStr.length > 0) {
+            verb = new TinCan.Verb (verbStr);
+        }
+        return verb;
+    };
+
+    this.getVerb1 = function () {
+        var verbStr = this.getSearchVar("verb1"),
+            verb = null
+        ;
+        if (verbStr !== null && verbStr.length > 0) {
+            verb = new TinCan.Verb (verbStr);
+        }
+        return verb;
+    };
+
+    this.getRegistration = function () {
+        return this.getSearchVar("registration");
+    };
+
+    this.getRegistration1 = function () {
+        return this.getSearchVar("registration1");
+    };
+
+    this.getSince = function () {
+        var since = this.getSearchVar("since");
+        if (since !== null && !this.dateStrIncludesTimeZone(since)) {
+            since = since + "Z";
+        }
+        return since;
+    };
+
+    this.getSince1 = function () {
+        var since = this.getSearchVar("since1");
+        if (since !== null && !this.dateStrIncludesTimeZone(since)) {
+            since = since + "Z";
+        }
+        return since;
+    };
+
+    this.getUntil = function () {
+        var until = this.getSearchVar("until");
+        if (until !== null && !this.dateStrIncludesTimeZone(until)) {
+            until = until + "Z";
+        }
+        return until;
+    };
+
+    this.getUntil1 = function () {
+        var until = this.getSearchVar("until1");
+        if (until !== null && !this.dateStrIncludesTimeZone(until)) {
+            until = until + "Z";
+        }
+        return until;
+    };
+
+    this.getAgent = function () {
+        var agent = null,
+            agentCfg = {},
+            agentProperty = this.getSearchVar("agentProperty"),
+            agentValue = this.getSearchVar("agentValue");
+
+        if (agentProperty !== null && agentValue !== null) {
+            agentCfg[agentProperty] = agentValue;
+
+            agent = new TinCan.Agent(agentCfg);
+        }
+
+        return agent;
+    };
+
     this.getActor = function () {
         var actor = null,
             actorJson = this.getSearchVar("actorJson"),
@@ -87,14 +167,14 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
         return actor;
     };
 
-    this.getVerb = function () {
-        var verbStr = this.getSearchVar("verb"),
-            verb = null
+    this.getActivity = function () {
+        var activityId = this.getSearchVar("activityId1"),
+            activity = null
         ;
-        if (verbStr !== null && verbStr.length > 0) {
-            verb = new TinCan.Verb (verbStr);
+        if (activityId !== null && activityId.length > 0) {
+            activity = new TinCan.Activity ( { id: activityId } );
         }
-        return verb;
+        return activity;
     };
 
     this.getTarget = function () {
@@ -136,10 +216,6 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
         return obj;
     };
 
-    this.getRegistration = function () {
-        return this.getSearchVar("registration");
-    };
-
     this.getInstructor = function () {
         var instructorJson = this.getSearchVar("instructorJson"),
             instructor = null;
@@ -147,22 +223,6 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
             instructor = TinCan.Agent.fromJSON(instructorJson);
         }
         return instructor;
-    };
-
-    this.getSince = function () {
-        var since = this.getSearchVar("since");
-        if (since !== null && !this.dateStrIncludesTimeZone(since)) {
-            since = since + "Z";
-        }
-        return since;
-    };
-
-    this.getUntil = function () {
-        var until = this.getSearchVar("until");
-        if (until !== null && !this.dateStrIncludesTimeZone(until)) {
-            until = until + "Z";
-        }
-        return until;
     };
 
     this.getContext = function () {
@@ -177,8 +237,18 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
         return this.getSearchVarAsBoolean("sparse", "false");
     };
 
-    this.getVersion = function () {
-        return this.getSearchVar("version") || "all";
+    this.getFormat = function () {
+        return this.getSearchVar("format");
+    };
+
+    this.getRelatedAgents = function () {
+        return this.getSearchVarAsBoolean("relatedAgents");
+    };
+    this.getRelatedActivities = function () {
+        return this.getSearchVarAsBoolean("relatedActivities");
+    };
+    this.getAttachments = function () {
+        return this.getSearchVarAsBoolean("attachments");
     };
 
     this.dateStrIncludesTimeZone = function (str) {
@@ -252,38 +322,21 @@ TINCAN.Viewer.prototype.TinCanFormHelper = function () {
     };
 };
 
-TINCAN.Viewer.prototype.searchStatements = function () {
-    var selectVersion,
-        versionsToUse,
-        helper = new this.TinCanSearchHelper(),
-        queryObj = {
-            limit: 25,
-            context: helper.getContext(),
-            authoritative: helper.getAuthoritative(),
-            sparse: helper.getSparse()
-        },
-        requestResult,
-        url,
-        urlPairs = [],
+TINCAN.Viewer.prototype.pre1QueryObj = function (helper) {
+    var queryObj = {},
         actor = helper.getActor(),
         verb = helper.getVerb(),
         target = helper.getTarget(),
         registration = helper.getRegistration(),
         since = helper.getSince(),
         until = helper.getUntil(),
-        instructor = helper.getInstructor();
+        instructor = helper.getInstructor(),
+        context = helper.getContext(),
+        sparse = helper.getSparse(),
+        authoritative = helper.getAuthoritative();
 
-    if (actor !== null) {
-        queryObj.actor = actor;
-    }
     if (verb !== null) {
         queryObj.verb = verb;
-    }
-    if (target !== null) {
-        queryObj.target = target;
-    }
-    if (registration !== null) {
-        queryObj.registration = registration;
     }
     if (instructor !== null) {
         queryObj.instructor = instructor;
@@ -291,15 +344,104 @@ TINCAN.Viewer.prototype.searchStatements = function () {
     if (since !== null) {
         queryObj.since = since;
     }
+    if (registration !== null) {
+        queryObj.registration = registration;
+    }
     if (until !== null) {
         queryObj.until = until;
     }
+    if (actor !== null) {
+        queryObj.actor = actor;
+    }
+    if (target !== null) {
+        queryObj.target = target;
+    }
+    if (context !== null) {
+        queryObj.context = context;
+    }
+    if (sparse !== null) {
+        queryObj.sparse = sparse;
+    }
+    if (authoritative !== null) {
+        queryObj.authoritative = authoritative;
+    }
+
+    return queryObj;
+};
+
+TINCAN.Viewer.prototype.v1QueryObj = function (helper) {
+    var queryObj = {},
+        agent = helper.getAgent(),
+        verb = helper.getVerb1(),
+        activity = helper.getActivity(),
+        registration = helper.getRegistration1(),
+        since = helper.getSince1(),
+        until = helper.getUntil1(),
+        format = helper.getFormat()
+        relatedAgents = helper.getRelatedAgents()
+        relatedActivities = helper.getRelatedActivities()
+        attachments = helper.getAttachments();
+
+    if (agent !== null) {
+        queryObj.agent = agent;
+    }
+    if (verb !== null) {
+        queryObj.verb = verb;
+    }
+    if (activity !== null) {
+        queryObj.activity = activity;
+    }
+    if (since !== null) {
+        queryObj.since = since;
+    }
+    if (until !== null) {
+        queryObj.until = until;
+    }
+    if (format !== null) {
+        queryObj.format = format;
+    }
+    if (registration !== null) {
+        queryObj.registration = registration;
+    }
+    if (relatedAgents !== null) {
+        queryObj.related_agents = relatedAgents;
+    }
+    if (relatedActivities !== null) {
+        queryObj.related_activities = relatedActivities;
+    }
+    // TODO: TinCanJS doesn't yet parse multipart
+    //if (attachments !== null) {
+        //queryObj.attachments = attachments;
+    //}
+
+    return queryObj;
+};
+
+TINCAN.Viewer.prototype.searchStatements = function () {
+    var selectVersion,
+        versionsToUse,
+        helper = new this.TinCanSearchHelper(),
+        queryObj,
+        requestResult,
+        url,
+        urlPairs = [];
 
     selectVersion = helper.getVersion();
 
+    if (selectVersion === "0.9" || selectVersion === "0.95" || selectVersion === "0.95 + 0.9") {
+        queryObj = this.pre1QueryObj(helper);
+    }
+    else {
+        queryObj = this.v1QueryObj(helper);
+    }
+
+    queryObj.limit = 25;
+
     // Figure out the versions to use
-    if (selectVersion === "all") {
-        versionsToUse = this.allVersions;
+    if (selectVersion === "latest") {
+        versionsToUse = [ this.allVersions[0] ];
+    } else if (selectVersion === "0.95 + 0.9") {
+        versionsToUse = [ "0.95", "0.9" ];
     } else {
         versionsToUse = [ selectVersion ];
     }
@@ -307,11 +449,16 @@ TINCAN.Viewer.prototype.searchStatements = function () {
     this.multiVersionStream = this.getMultiVersionStream(versionsToUse);
     requestResult = this.multiVersionStream.loadStatements(queryObj, this.getCallback(this.statementsFetched));
 
-    // Set the TCAPI query text
-    for (prop in requestResult.config.params) {
-        urlPairs.push(prop + "=" + encodeURIComponent(requestResult.config.params[prop]));
+    if (requestResult.config && requestResult.config.params) {
+        // Set the TCAPI query text
+        for (prop in requestResult.config.params) {
+            urlPairs.push(prop + "=" + encodeURIComponent(requestResult.config.params[prop]));
+        }
+        url = this.lrses[versionsToUse[0]].endpoint + requestResult.config.url + "?" + urlPairs.join("&");
     }
-    url = this.lrses[versionsToUse[0]].endpoint + requestResult.config.url + "?" + urlPairs.join("&");
+    else {
+        url = "Invalid URL: " + requestResult.err;
+    }
     $("#TCAPIQueryText").text(url);
 };
 
@@ -563,7 +710,14 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
 };
 
 TINCAN.Viewer.prototype.pageInitialize = function () {
-    var tcViewer = this;
+    var tcViewer = this,
+        doRefresh = function () {
+            $("#statementsLoading").show();
+            $("#showAllStatements").hide();
+            $("#noStatementsMessage").hide();
+            $("#theStatements").empty();
+            tcViewer.searchStatements();
+        };
 
     $.datepicker.setDefaults(
         {
@@ -573,20 +727,14 @@ TINCAN.Viewer.prototype.pageInitialize = function () {
     );
     $("#since").datepicker();
     $("#until").datepicker();
+    $("#since1").datepicker();
+    $("#until1").datepicker();
 
     $("#statementsLoading").show();
     $("#showAllStatements").hide();
     $("#noStatementsMessage").hide();
 
-    $("#refreshStatements").click(
-        function () {
-            $("#statementsLoading").show();
-            $("#showAllStatements").hide();
-            $("#noStatementsMessage").hide();
-            $("#theStatements").empty();
-            tcViewer.searchStatements();
-        }
-    );
+    $("#refreshStatements").click(doRefresh);
 
     $("#showAllStatements").click(
         function () {
@@ -595,13 +743,59 @@ TINCAN.Viewer.prototype.pageInitialize = function () {
         }
     );
 
+    $("#version").change(
+        function (e) {
+            var version = $(e.target.options[e.target.selectedIndex]).val(),
+                searchBoxTable = $("#searchBoxTable"),
+                advancedSearchTable = $("#advancedSearchTable"),
+                searchBoxTable1 = $("#searchBoxTable1"),
+                advancedSearchTable1 = $("#advancedSearchTable1");
+
+            if (version === "0.9" || version === "0.95" || version === "0.95 + 0.9") {
+                if (searchBoxTable1.is(":visible")) {
+                    searchBoxTable1.toggle("slow");
+                    searchBoxTable.toggle("slow");
+
+                    if (advancedSearchTable1.is(":visible")) {
+                        advancedSearchTable1.toggle("slow");
+                        advancedSearchTable.toggle("slow");
+                    }
+                }
+            }
+            else {
+                if (searchBoxTable.is(":visible")) {
+                    searchBoxTable.toggle("slow");
+                    searchBoxTable1.toggle("slow");
+
+                    if (advancedSearchTable.is(":visible")) {
+                        advancedSearchTable.toggle("slow");
+                        advancedSearchTable1.toggle("slow");
+                    }
+                }
+            }
+
+            doRefresh();
+        }
+    );
+
     $("#showAdvancedOptions").click(
         function () {
-            $("#advancedSearchTable").toggle(
+            var version = $("#version").val(),
+                node;
+
+            if (version === "0.9" || version === "0.95" || version === "0.95 + 0.9") {
+                node = $("#advancedSearchTable");
+            }
+            else {
+                node = $("#advancedSearchTable1");
+            }
+
+            node.toggle(
                 'slow',
                 function () {
-                    var visible = $("#advancedSearchTable").is(":visible"),
+                    var visible = node.is(":visible"),
                         text = (visible ? "Hide" : "Show") + " Advanced Options";
+
                     $("#showAdvancedOptions").html(text);
                 }
             );
