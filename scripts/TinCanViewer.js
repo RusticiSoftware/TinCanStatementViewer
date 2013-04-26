@@ -352,9 +352,9 @@ TINCAN.Viewer.prototype.v1QueryObj = function (helper) {
     var queryObj = this.commonQueryObj(helper),
         agent = helper.getAgent(),
         activity = helper.getActivity(),
-        format = helper.getFormat()
-        relatedAgents = helper.getRelatedAgents()
-        relatedActivities = helper.getRelatedActivities()
+        format = helper.getFormat(),
+        relatedAgents = helper.getRelatedAgents(),
+        relatedActivities = helper.getRelatedActivities(),
         attachments = helper.getAttachments();
 
     if (agent !== null) {
