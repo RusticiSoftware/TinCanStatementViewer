@@ -250,6 +250,7 @@ TINCAN.Viewer.prototype.TinCanFormHelper = function () {
         for (var key in qsMap) {
             var inputType = ($.inArray(key, booleanVals) >= 0) ? "checkbox" : "text";
             this.setInputFromQueryString(key, qsMap[key], inputType);
+            this.setInputFromQueryString(key+"1", qsMap[key], inputType); //For 1.0.0 form fields
         }
     };
 
