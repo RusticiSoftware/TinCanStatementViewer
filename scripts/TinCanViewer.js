@@ -387,6 +387,7 @@ TINCAN.Viewer.prototype.searchStatements = function () {
         helper = new this.TinCanSearchHelper(),
         queryObj,
         requestResult,
+        prop,
         url,
         urlPairs = [];
 
