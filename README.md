@@ -1,13 +1,11 @@
-#Project Tin Can Prototypes
+###Overview
+
+This repo contains a statement viewing page for Tin Can API statement streams.
+
+* Copy the file `config.js.template` to `config.js` and set `Config.endpoint` to the LRS endpoint, including a trailing slash (ex: https://cloud.scorm.com/tc/public/)
+* Set the endpoint credentials in `Config.authUser` and `Config.authPassword` as provided by the LRS
+* Load: index.html in a browser
+
 ###Contact:
-* tincan@scorm.com
-* http://scorm.com/tincan
-
-##Overview
-
-###This package contains a statement viewing page for the Tin Can API.
-
- * Copy the file config.js.template to config.js 
-and set Config.endpoint to the LRS endpoint, including a trailing slash (ex: https://cloud.scorm.com/ScormEngineInterface/TCAPI/public/)
- * Verify the LRS endpoint in your browser by navigating to the URL: &lt;endpoint&gt;/statements?limit=1
- * Launch: index.html
+info@tincanapi.com<br>
+http://tincanapi.com
