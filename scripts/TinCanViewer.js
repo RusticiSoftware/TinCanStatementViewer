@@ -459,6 +459,15 @@ TINCAN.Viewer.prototype.statementsFetched = function (multiStream) {
     $("#showAllStatements").toggle(!multiStream.exhausted());
 };
 
+TINCAN.Viewer.prototype.escapeHTML = function (text) {
+    var html = text + "";
+    return html.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+};
+
+TINCAN.Viewer.prototype.renderActor = function (actor) {
+    return this.escapeHTML(actor);
+};
+
 TINCAN.Viewer.prototype.renderStatements = function (statements) {
     var allStmtStr,
         i,
@@ -471,10 +480,6 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
         answer,
         activityType;
 
-    function escapeHTML (text) {
-        var html = text + "";
-        return html.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
 
     function truncateString (str, length) {
         if (str === null || str.length < 4 || str.length <= length) {
@@ -607,7 +612,10 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
         stmtStr.push("<div class='statement unwired' tcid='" + stmt.id + "'>");
 
         try {
-            stmtStr.push("<span class='actor'>" + (stmt.actor !== null ? escapeHTML(stmt.actor) : "No Actor") + "</span> ");
+            stmtStr.push(
+                "<span class='actor'>" + 
+                    (stmt.actor !== null ? this.renderActor(stmt.actor) : "No Actor") + 
+                "</span> ");
 
             if (stmt.context !== null &&
                 stmt.context.extensions !== null &&
@@ -634,14 +642,14 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
                             verb = (stmt.result.success ? "correctly " : "incorrectly ") + verb;
                         }
                         if (stmt.result.response !== null) {
-                            answer = " with response '" + escapeHTML(truncateString(getResponseText(stmt), 30)) + "' ";
+                            answer = " with response '" + this.escapeHTML(truncateString(getResponseText(stmt), 30)) + "' ";
                         }
                     }
                 }
             }
 
-            stmtStr.push(" <span class='verb'>" + escapeHTML(verb) + "</span> ");
-            stmtStr.push(" <span class='object'>'" + escapeHTML(stmt.target) + "'</span> ");
+            stmtStr.push(" <span class='verb'>" + this.escapeHTML(verb) + "</span> ");
+            stmtStr.push(" <span class='object'>'" + this.escapeHTML(stmt.target) + "'</span> ");
             stmtStr.push(answer !== null ? answer : "");
 
             if (stmt.result !== null && stmt.result.score !== null) {
