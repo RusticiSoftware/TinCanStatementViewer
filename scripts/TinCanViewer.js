@@ -468,6 +468,10 @@ TINCAN.Viewer.prototype.renderActor = function (actor) {
     return this.escapeHTML(actor);
 };
 
+TINCAN.Viewer.prototype.renderStoredDate = function (storedDateStr) {
+    return storedDateStr.replace('Z','')
+};
+
 TINCAN.Viewer.prototype.renderStatements = function (statements) {
     var allStmtStr,
         i,
@@ -607,7 +611,12 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
         //this.log("-------------------------------" + stmt.id + "-------------------------------");
 
         stmtStr.push("<tr class='statementRow'>");
-        stmtStr.push("<td class='date'><div class='statementDate'>" + (stmt.stored !== null ? stmt.stored.replace('Z','') : "") + "</div></td>");
+
+        stmtStr.push(
+            "<td class='date'><div class='statementDate'>" +
+                (stmt.stored !== null ? this.renderStoredDate(stmt.stored) : "") +
+            "</div></td>");
+
         stmtStr.push("<td>");
         stmtStr.push("<div class='statement unwired' tcid='" + stmt.id + "'>");
 
