@@ -91,7 +91,7 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
 
     this.getSince = function () {
         var since = this.getSearchVar(this.getVersion().indexOf("0.9") === -1 ? "since1" : "since");
-        if (since != null && this.dateStrIsDateOnly(since)) {
+        if (since !== null && this.dateStrIsDateOnly(since)) {
             since = this.appendDefaultTime(since);
         }
         if (since !== null && !this.dateStrIncludesTimeZone(since)) {
@@ -102,7 +102,7 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
 
     this.getUntil = function () {
         var until = this.getSearchVar(this.getVersion().indexOf("0.9") === -1 ? "until1" : "until");
-        if (until != null && this.dateStrIsDateOnly(until)) {
+        if (until !== null && this.dateStrIsDateOnly(until)) {
             until = this.appendDefaultTime(until);
         }
         if (until !== null && !this.dateStrIncludesTimeZone(until)) {
