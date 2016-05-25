@@ -91,6 +91,9 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
 
     this.getSince = function () {
         var since = this.getSearchVar(this.getVersion().indexOf("0.9") === -1 ? "since1" : "since");
+        if (since !== null && this.dateStrIsDateOnly(since)) {
+            since = this.appendDefaultTime(since);
+        }
         if (since !== null && !this.dateStrIncludesTimeZone(since)) {
             since = since + "Z";
         }
@@ -99,6 +102,9 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
 
     this.getUntil = function () {
         var until = this.getSearchVar(this.getVersion().indexOf("0.9") === -1 ? "until1" : "until");
+        if (until !== null && this.dateStrIsDateOnly(until)) {
+            until = this.appendDefaultTime(until);
+        }
         if (until !== null && !this.dateStrIncludesTimeZone(until)) {
             until = until + "Z";
         }
@@ -225,6 +231,16 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
 
     this.dateStrIncludesTimeZone = function (str) {
         return typeof str !== "undefined" && (str.indexOf("+") >= 0 || str.indexOf("Z") >= 0);
+    };
+
+    this.dateStrIsDateOnly = function (str) {
+        // yyyy-mm-dd
+        var dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        return typeof str !== "undefined" && (dateRegex.test(str));
+    };
+
+    this.appendDefaultTime = function (str) {
+        return str + "T00:00:00.000Z";
     };
 
     this.getSearchVar = function (searchVarName, defaultVal) {
