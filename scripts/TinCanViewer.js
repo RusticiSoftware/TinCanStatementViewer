@@ -261,7 +261,7 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
 
 TINCAN.Viewer.prototype.TinCanFormHelper = function () {
     this.copyQueryStringToForm = function () {
-        var booleanVals = ["context", "authoritative", "sparse"];
+        var booleanVals = ["context", "authoritative", "sparse", "relatedActivities", "relatedAgents"];
         var qsMap = this.getQueryStringMap();
         for (var key in qsMap) {
             var inputType = ($.inArray(key, booleanVals) >= 0) ? "checkbox" : "text";
