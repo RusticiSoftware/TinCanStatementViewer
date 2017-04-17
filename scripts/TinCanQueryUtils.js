@@ -134,7 +134,11 @@ TINCAN.MultiLRSStatementStream.prototype = {
                 if (err === null) {
                     // Capture this lrs's statements into state, note more url
                     Array.prototype.push.apply(streamState.statements, stResult.statements);
-                    streamState.moreUrl = stResult.more;
+                    // The spec stipulates that an empty string should be
+                    // returned if there are no more results to fetch... but
+                    // all the code here checks for null explicitly. So "cast"
+                    // empty string results as null.
+                    streamState.moreUrl = stResult.more === "" ? null : stResult.more;
                 }
 
                 // Only do handed in callback after all versions done
