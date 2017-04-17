@@ -138,7 +138,7 @@ TINCAN.MultiLRSStatementStream.prototype = {
                     // returned if there are no more results to fetch... but
                     // all the code here checks for null explicitly. So "cast"
                     // empty string results as null.
-                    streamState.moreUrl = stResult.more ? stResult.more : null;
+                    streamState.moreUrl = stResult.more === "" ? null : stResult.more;
                 }
 
                 // Only do handed in callback after all versions done
