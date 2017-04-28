@@ -115,12 +115,21 @@ TINCAN.Viewer.prototype.TinCanSearchHelper = function () {
         var agent = null,
             agentCfg = {},
             agentProperty = this.getSearchVar("agentProperty"),
-            agentValue = this.getSearchVar("agentValue");
+            agentValue = this.getSearchVar("agentValue"),
+            agentAccountName = this.getSearchVar("agentAccountName"),
+            agentAccountHomePage = this.getSearchVar("agentAccountHomePage");
 
-        if (agentProperty !== null && agentValue !== null) {
-            agentCfg[agentProperty] = agentValue;
-
-            agent = new TinCan.Agent(agentCfg);
+        if (agentProperty !== null) {
+            if (agentProperty == 'account' && agentAccountHomePage !== null && agentAccountName !== null){
+                agentCfg.account = {
+                    name: agentAccountName,
+                    homePage: agentAccountHomePage
+                };
+                agent = new TinCan.Agent(agentCfg);
+            } else if (agentValue !== null) {
+                agentCfg[agentProperty] = agentValue;
+                agent = new TinCan.Agent(agentCfg);
+            }
         }
 
         return agent;
@@ -773,6 +782,22 @@ TINCAN.Viewer.prototype.pageInitialize = function () {
             }
 
             doRefresh();
+        }
+    );
+
+    $("#agentAccountName").hide();
+    $("#agentAccountHomePage").hide();
+    $("#agentProperty").change(
+        function (e) {
+            if ($("#agentProperty").val() == 'mbox') {
+                $("#agentValue").show();
+                $("#agentAccountName").hide();
+                $("#agentAccountHomePage").hide();
+            } else if ($("#agentProperty").val() == 'account') {
+                $("#agentValue").hide();
+                $("#agentAccountName").show();
+                $("#agentAccountHomePage").show();
+            }
         }
     );
 
