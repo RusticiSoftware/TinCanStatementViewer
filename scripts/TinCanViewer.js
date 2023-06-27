@@ -694,7 +694,7 @@ TINCAN.Viewer.prototype.renderStatements = function (statements) {
 
         if (this.includeRawData) {
             stmtStr.push("<div class='tc_rawdata' tcid_data='" + stmt.id + "'>");
-            stmtStr.push("<pre>" + stmt.originalJSON + "</pre>");
+            stmtStr.push("<pre>" + this.escapeHTML(stmt.originalJSON) + "</pre>");
             stmtStr.push("</div>");
         }
 
