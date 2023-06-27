@@ -477,7 +477,11 @@ TINCAN.Viewer.prototype.statementsFetched = function (multiStream) {
 
 TINCAN.Viewer.prototype.escapeHTML = function (text) {
     var html = text + "";
-    return html.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return html.replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 };
 
 TINCAN.Viewer.prototype.renderActor = function (actor) {
